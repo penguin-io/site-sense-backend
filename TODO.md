@@ -13,7 +13,6 @@
 ### 2. Biometric Processing Pipeline
 - [ ] Set up endpoint to receive biometric data (face, voice)
 - [ ] Implement face recognition processing (integrate with AI model)
-- [ ] Develop voice recognition processing (integrate with AI model)
 - [ ] Create fallback mechanism for QR code-based check-in
 - [ ] Implement liveness detection integration
 
@@ -69,3 +68,6 @@
 - [ ] Create endpoints to receive and store simulation data
 - [ ] Implement API for retrieving and analyzing simulation results
 - [ ] Develop system to use simulation data for system improvements
+
+
+# make api endpoint which takes rtsp stream and send backs the same stream with bounding boxes and hls
