@@ -25,13 +25,6 @@ class SQLAlchemyZoneDatabase:
         results = await self.session.execute(statement)
         return results.unique().scalar_one_or_none()
 
-    async def get_by_worksite(self, worksite_id: int):
-        statement = select(self.zone_table).where(
-            self.zone_table.worksite_id == worksite_id
-        )
-        results = await self.session.execute(statement)
-        return results.scalars().fetchall()
-
     async def create(self, zone_create: ZoneCreate) -> Zone:
         zone = self.zone_table(**zone_create.model_dump())
         try:

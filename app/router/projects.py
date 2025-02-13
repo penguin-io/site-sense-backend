@@ -1,9 +1,12 @@
 from fastapi import APIRouter, Depends, status, HTTPException
 from app.manager.users import current_active_user
 from app.schemas.projects import ProjectCreate, ProjectRead, ProjectUpdate
+from app.schemas.worksites import WorksitesRead
 from app.db.users import User
 from app.exceptions import ErrorCode, ErrorModel
 from uuid import UUID
+
+from app.schemas.worksites import WorksiteRead
 
 
 def get_project_router(get_project_manager) -> APIRouter:
@@ -48,6 +51,47 @@ def get_project_router(get_project_manager) -> APIRouter:
         if project is None:
             raise HTTPException(status_code=404, detail=ErrorCode.PROJECT_NOT_FOUND)
         return project
+
+    @router.get(
+        "/{project_id}/worksites",
+        summary="Get all worksites of a project by its id",
+        responses={
+            status.HTTP_404_NOT_FOUND: {
+                "model": ErrorModel,
+                "content": {
+                    "application/json": {
+                        "examples": {
+                            ErrorCode.PROJECT_NOT_FOUND: {
+                                "value": {"detail": ErrorCode.PROJECT_NOT_FOUND}
+                            }
+                        }
+                    }
+                },
+            },
+        },
+        response_model=WorksitesRead,
+    )
+    async def get_worksites(
+            project_id: UUID,
+            project_manager=Depends(get_project_manager),
+    ):
+        """
+        This route returns all worksites of a project by its id
+        ### Arguments
+        * project_id: The id of the project
+
+        ### Response
+        * worksites (WorksitesRead): The worksites of the requested project
+
+        ### Raises
+        * HTTPException:
+            * 404 Not found: If the project doesn't exist
+        """
+        worksites = await project_manager.get_worksites(project_id)
+        print(worksites)
+        if worksites is None:
+            raise HTTPException(status_code=404, detail=ErrorCode.PROJECT_NOT_FOUND)
+        return worksites
 
     @router.post(
         "/",

@@ -28,13 +28,6 @@ class SQLAlchemyWorksiteDatabase:
         results = await self.session.execute(statement)
         return results.unique().scalar_one_or_none()
 
-    async def get_by_project(self, project_id: UUID):
-        statement = select(self.worksite_table).where(
-            self.worksite_table.project_id == project_id
-        )
-        results = await self.session.execute(statement)
-        return results.scalars().fetchall()
-
     async def create(self, worksite_create: WorksiteCreate) -> Worksite:
         worksite = self.worksite_table(**worksite_create.model_dump())
         try:

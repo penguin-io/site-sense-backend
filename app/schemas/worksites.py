@@ -1,4 +1,5 @@
-from pydantic import BaseModel
+from typing import List
+from pydantic import BaseModel, RootModel
 from datetime import datetime
 from uuid import UUID
 
@@ -19,3 +20,6 @@ class WorksiteRead(BaseModel):
 
 class WorksiteUpdate(BaseModel):
     description: str
+
+class WorksitesRead(RootModel):
+    root: List[WorksiteRead]
