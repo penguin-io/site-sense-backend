@@ -10,6 +10,7 @@ class ZoneCreate(BaseModel):
     feed_uri: str
     worksite_id: int
 
+
 class ZoneRead(BaseModel):
     id: int
     name: str
@@ -17,6 +18,7 @@ class ZoneRead(BaseModel):
     created_time: datetime
     worksite_id: int
     project_id: UUID
+
 
 class ZoneUpdate(BaseModel):
     description: Optional[str] = None

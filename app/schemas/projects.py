@@ -14,5 +14,6 @@ class ProjectRead(BaseModel):
     description: str | None = None
     created_time: datetime
 
+
 class ProjectUpdate(BaseModel):
     description: str

@@ -5,6 +5,7 @@ from uuid import UUID
 
 SECRET = "SECRET"
 
+
 class ProjectManager:
     def __init__(self, project_table):
         self.project_table = project_table
@@ -51,6 +52,7 @@ class ProjectManager:
         """
         result = await self.project_table.delete(project_id)
         return result
+
 
 async def get_project_manager(project_table=Depends(get_project_db)):
     yield ProjectManager(project_table)

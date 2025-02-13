@@ -29,8 +29,8 @@ def get_worksite_router(get_worksite_manager) -> APIRouter:
         response_model=WorksiteRead,
     )
     async def get_worksite(
-            worksite_id: int,
-            worksite_manager=Depends(get_worksite_manager),
+        worksite_id: int,
+        worksite_manager=Depends(get_worksite_manager),
     ):
         """
         This route returns a worksite by its id
@@ -82,9 +82,9 @@ def get_worksite_router(get_worksite_manager) -> APIRouter:
         },
     )
     async def create_worksite(
-            worksite: WorksiteCreate,
-            user: User = Depends(current_active_user),
-            worksite_manager=Depends(get_worksite_manager),
+        worksite: WorksiteCreate,
+        user: User = Depends(current_active_user),
+        worksite_manager=Depends(get_worksite_manager),
     ):
         """
         This route creates a new worksite
@@ -109,9 +109,13 @@ def get_worksite_router(get_worksite_manager) -> APIRouter:
             raise HTTPException(status_code=422, detail=ErrorCode.WORKSITE_NAME_EXISTS)
         return worksite
 
-
     @router.patch("/{worksite_id}")
-    async def update_worksite(worksite_id: UUID, worksite: WorksiteUpdate, user: User = Depends(current_active_user), worksite_manager=Depends(get_worksite_manager)):
+    async def update_worksite(
+        worksite_id: UUID,
+        worksite: WorksiteUpdate,
+        user: User = Depends(current_active_user),
+        worksite_manager=Depends(get_worksite_manager),
+    ):
         if not user.is_superuser:
             raise HTTPException(status_code=403, detail=ErrorCode.ADMIN_REQUIRED)
         worksite = await worksite_manager.update(worksite_id, worksite)
@@ -151,9 +155,9 @@ def get_worksite_router(get_worksite_manager) -> APIRouter:
         },
     )
     async def delete_worksite(
-            worksite_id: UUID,
-            user: User = Depends(current_active_user),
-            worksite_manager=Depends(get_worksite_manager),
+        worksite_id: UUID,
+        user: User = Depends(current_active_user),
+        worksite_manager=Depends(get_worksite_manager),
     ):
         """
         This route deletes a worksite

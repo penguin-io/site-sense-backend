@@ -2,14 +2,18 @@ from typing import Union, Dict
 from enum import Enum
 from pydantic import BaseModel
 
+
 class InvalidProjectError(Exception):
     pass
+
 
 class InvalidWorksiteError(Exception):
     pass
 
+
 class ErrorModel(BaseModel):
     detail: Union[str, Dict[str, str]]
+
 
 class ErrorCode(str, Enum):
     ADMIN_REQUIRED = "admin access required :("

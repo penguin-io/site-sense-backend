@@ -16,5 +16,6 @@ class WorksiteRead(BaseModel):
     created_time: datetime
     project_id: UUID
 
+
 class WorksiteUpdate(BaseModel):
     description: str

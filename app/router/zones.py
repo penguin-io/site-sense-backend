@@ -28,8 +28,8 @@ def get_zone_router(get_zone_manager) -> APIRouter:
         response_model=ZoneRead,
     )
     async def get_zone(
-            zone_id: int,
-            zone_manager=Depends(get_zone_manager),
+        zone_id: int,
+        zone_manager=Depends(get_zone_manager),
     ):
         """
         This route returns a zone by its id
@@ -81,9 +81,9 @@ def get_zone_router(get_zone_manager) -> APIRouter:
         },
     )
     async def create_zone(
-            zone: ZoneCreate,
-            user: User = Depends(current_active_user),
-            zone_manager=Depends(get_zone_manager),
+        zone: ZoneCreate,
+        user: User = Depends(current_active_user),
+        zone_manager=Depends(get_zone_manager),
     ):
         """
         This route creates a new zone
@@ -106,9 +106,13 @@ def get_zone_router(get_zone_manager) -> APIRouter:
             raise HTTPException(status_code=422, detail=ErrorCode.ZONE_NAME_EXISTS)
         return zone
 
-
     @router.patch("/{zone_id}")
-    async def update_zone(zone_id: int, zone: ZoneUpdate, user: User = Depends(current_active_user), zone_manager=Depends(get_zone_manager)):
+    async def update_zone(
+        zone_id: int,
+        zone: ZoneUpdate,
+        user: User = Depends(current_active_user),
+        zone_manager=Depends(get_zone_manager),
+    ):
         if not user.is_superuser:
             raise HTTPException(status_code=403, detail=ErrorCode.ADMIN_REQUIRED)
         zone = await zone_manager.update(zone_id, zone)
@@ -148,9 +152,9 @@ def get_zone_router(get_zone_manager) -> APIRouter:
         },
     )
     async def delete_zone(
-            zone_id: int,
-            user: User = Depends(current_active_user),
-            zone_manager=Depends(get_zone_manager),
+        zone_id: int,
+        user: User = Depends(current_active_user),
+        zone_manager=Depends(get_zone_manager),
     ):
         """
         This route deletes a zone

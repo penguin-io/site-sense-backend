@@ -107,9 +107,13 @@ def get_project_router(get_project_manager) -> APIRouter:
             raise HTTPException(status_code=422, detail=ErrorCode.PROJECT_NAME_EXISTS)
         return project
 
-
     @router.patch("/{project_id}")
-    async def update_project(project_id: UUID, project: ProjectUpdate, user: User = Depends(current_active_user), project_manager=Depends(get_project_manager)):
+    async def update_project(
+        project_id: UUID,
+        project: ProjectUpdate,
+        user: User = Depends(current_active_user),
+        project_manager=Depends(get_project_manager),
+    ):
         if not user.is_superuser:
             raise HTTPException(status_code=403, detail=ErrorCode.ADMIN_REQUIRED)
         project = await project_manager.update(project_id, project)

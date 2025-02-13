@@ -1,7 +1,10 @@
 from fastapi import Depends
-from app.db.projects import Zone, get_zone_db, get_worksite_db
+from app.db.projects import Zone
+from app.db.worksites import get_worksite_db
+from app.db.zones import get_zone_db
 from app.schemas.zones import ZoneCreate, ZoneUpdate
 from uuid import UUID
+
 
 class ZoneManager:
     def __init__(self, zone_table, worksite_table):
@@ -52,5 +55,8 @@ class ZoneManager:
         result = await self.zone_table.delete(zone_id)
         return result
 
-async def get_zone_manager(zone_table=Depends(get_zone_db), worksite_table=Depends(get_worksite_db)):
+
+async def get_zone_manager(
+    zone_table=Depends(get_zone_db), worksite_table=Depends(get_worksite_db)
+):
     yield ZoneManager(zone_table, worksite_table)

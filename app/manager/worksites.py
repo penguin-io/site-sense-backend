@@ -1,8 +1,10 @@
 from fastapi import Depends
-from app.db.projects import Worksite, get_worksite_db, get_project_db
+from app.db.projects import Worksite, get_project_db
+from app.db.worksites import get_worksite_db
 from app.exceptions import InvalidProjectError
 from app.schemas.worksites import WorksiteCreate, WorksiteUpdate
 from uuid import UUID
+
 
 class WorksiteManager:
     def __init__(self, worksite_table, project_table):
@@ -33,7 +35,9 @@ class WorksiteManager:
             raise Exception("Error creating worksite")
         return worksite
 
-    async def update(self, worksite_id: UUID, worksite_update: WorksiteUpdate) -> Worksite:
+    async def update(
+        self, worksite_id: UUID, worksite_update: WorksiteUpdate
+    ) -> Worksite:
         """
         Update an existing worksite
         :param worksite_id: The id of the target worksite
@@ -53,5 +57,8 @@ class WorksiteManager:
         result = await self.worksite_table.delete(worksite_id)
         return result
 
-async def get_worksite_manager(worksite_table=Depends(get_worksite_db), project_table=Depends(get_project_db)):
+
+async def get_worksite_manager(
+    worksite_table=Depends(get_worksite_db), project_table=Depends(get_project_db)
+):
     yield WorksiteManager(worksite_table, project_table)

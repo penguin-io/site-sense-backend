@@ -14,6 +14,7 @@ class project_router:
     def get_project_router(self):
         return get_project_router(self.get_project_manager)
 
+
 class worksite_router:
     def __init__(self, get_worksite_manager):
         self.get_worksite_manager = get_worksite_manager
@@ -21,12 +22,14 @@ class worksite_router:
     def get_worksite_router(self):
         return get_worksite_router(self.get_worksite_manager)
 
+
 class zone_router:
     def __init__(self, get_zone_manager):
         self.get_zone_manager = get_zone_manager
 
     def get_zone_router(self):
         return get_zone_router(self.get_zone_manager)
+
 
 project_router = project_router(get_project_manager)
 router = APIRouter()
