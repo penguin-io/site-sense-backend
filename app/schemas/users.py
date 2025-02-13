@@ -1,14 +1,16 @@
+from typing import Annotated
 import uuid
 
+from pydantic import Field
 from fastapi_users import schemas
 
 
 class UserRead(schemas.BaseUser[uuid.UUID]):
-    pass
+    username: str
 
 
 class UserCreate(schemas.BaseUserCreate):
-    pass
+    username: Annotated[str, Field(max_length=24)]
 
 
 class UserUpdate(schemas.BaseUserUpdate):

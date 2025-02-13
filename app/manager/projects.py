@@ -1,7 +1,10 @@
-from fastapi import Depends, Request
-from app.db.projects import Project, get_project_db
-from app.schemas.projects import ProjectCreate, ProjectUpdate
+from typing import List
 from uuid import UUID
+
+from fastapi import Depends
+
+from app.db.projects import Project, get_project_db, Worksite
+from app.schemas.projects import ProjectCreate, ProjectUpdate
 
 SECRET = "SECRET"
 
@@ -21,6 +24,25 @@ class ProjectManager:
         """
         project = await self.project_table.get(project_id)
         return project
+
+    async def get_all(self) -> List[Project]:
+        """
+        Fetch all projects
+
+        :return: List of projects
+        """
+        projects = await self.project_table.get_all()
+        return projects
+
+    async def get_worksites(self, project_id: UUID) -> List[Worksite]:
+        """
+        Fetch all worksites for a project
+
+        :param project_id: The id of the project
+        :return: List of worksites for the project
+        """
+        worksites = await self.project_table.get_worksites(project_id)
+        return worksites
 
     async def create(self, project_create: ProjectCreate) -> Project:
         """

@@ -1,5 +1,6 @@
+from typing import List
 from fastapi import Depends
-from app.db.projects import Worksite, get_project_db
+from app.db.projects import Worksite, get_project_db, Zone
 from app.db.worksites import get_worksite_db
 from app.exceptions import InvalidProjectError
 from app.schemas.worksites import WorksiteCreate, WorksiteUpdate
@@ -20,6 +21,16 @@ class WorksiteManager:
         """
         worksite = await self.worksite_table.get(worksite_id)
         return worksite
+
+    async def get_zones(self, worksite_id: UUID) -> List[Zone]:
+        """
+        Fetch all zones for a worksite
+
+        :param worksite_id: The id of the worksite
+        :return: List of zones for the worksite
+        """
+        zones = await self.worksite_table.get_zones(worksite_id)
+        return zones
 
     async def create(self, worksite_create: WorksiteCreate) -> Worksite:
         """

@@ -1,6 +1,7 @@
+from typing import List
 from fastapi import APIRouter, Depends, status, HTTPException
 from app.manager.users import current_active_user
-from app.schemas.projects import ProjectCreate, ProjectRead, ProjectUpdate
+from app.schemas.projects import ProjectCreate, ProjectRead, ProjectUpdate, ProjectsRead
 from app.schemas.worksites import WorksitesRead
 from app.db.users import User
 from app.exceptions import ErrorCode, ErrorModel
@@ -11,6 +12,13 @@ from app.schemas.worksites import WorksiteRead
 
 def get_project_router(get_project_manager) -> APIRouter:
     router = APIRouter()
+
+    @router.get("/all", response_model=ProjectsRead, summary="Get all projects")
+    async def get_all_projects(
+        user=Depends(current_active_user), project_manager=Depends(get_project_manager)
+    ):
+        projects = await project_manager.get_all()
+        return projects
 
     @router.get(
         "/{project_id}",
@@ -72,8 +80,9 @@ def get_project_router(get_project_manager) -> APIRouter:
         response_model=WorksitesRead,
     )
     async def get_worksites(
-            project_id: UUID,
-            project_manager=Depends(get_project_manager),
+        project_id: UUID,
+        project_manager=Depends(get_project_manager),
+        user=Depends(current_active_user),
     ):
         """
         This route returns all worksites of a project by its id
@@ -100,13 +109,14 @@ def get_project_router(get_project_manager) -> APIRouter:
         status_code=status.HTTP_201_CREATED,
         responses={
             status.HTTP_403_FORBIDDEN: {
-                "model": ErrorModel,
+                "description": "Forbidden",
                 "content": {
                     "application/json": {
                         "examples": {
-                            ErrorCode.ADMIN_REQUIRED: {
-                                "value": {"detail": ErrorCode.ADMIN_REQUIRED}
-                            },
+                            "forbidden": {
+                                "summary": "Forbidden Access",
+                                "value": "Forbidden",
+                            }
                         }
                     }
                 },
@@ -143,8 +153,6 @@ def get_project_router(get_project_manager) -> APIRouter:
             * 403 Forbidden: If the user is not the admin
             * 422 Unprocessable Entity: If the project name already exists
         """
-        if not user.is_superuser:
-            raise HTTPException(status_code=403, detail=ErrorCode.ADMIN_REQUIRED)
         try:
             project = await project_manager.create(project)
         except Exception as e:
@@ -158,8 +166,6 @@ def get_project_router(get_project_manager) -> APIRouter:
         user: User = Depends(current_active_user),
         project_manager=Depends(get_project_manager),
     ):
-        if not user.is_superuser:
-            raise HTTPException(status_code=403, detail=ErrorCode.ADMIN_REQUIRED)
         project = await project_manager.update(project_id, project)
         if project is None:
             raise HTTPException(status_code=404, detail=ErrorCode.PROJECT_NOT_FOUND)
@@ -183,12 +189,13 @@ def get_project_router(get_project_manager) -> APIRouter:
                 },
             },
             status.HTTP_403_FORBIDDEN: {
-                "model": ErrorModel,
+                "description": "Forbidden",
                 "content": {
                     "application/json": {
                         "examples": {
-                            ErrorCode.ADMIN_REQUIRED: {
-                                "value": {"detail": ErrorCode.ADMIN_REQUIRED}
+                            "forbidden": {
+                                "summary": "Forbidden Access",
+                                "value": "Forbidden",
                             }
                         }
                     }
@@ -211,8 +218,6 @@ def get_project_router(get_project_manager) -> APIRouter:
             * 404 Not found: If the project doesn't exist
             * 403 Forbidden: If the user is not the admin
         """
-        if not user.is_superuser:
-            raise HTTPException(status_code=403, detail=ErrorCode.ADMIN_REQUIRED)
         result = await project_manager.delete(project_id)
         if not result:
             raise HTTPException(status_code=404, detail=ErrorCode.PROJECT_NOT_FOUND)

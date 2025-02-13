@@ -55,12 +55,14 @@ class Worksite(Base):
 
     __tablename__ = "worksites"
     if TYPE_CHECKING:
-        id: int
+        id: UUID
         name: str
         description: str
         created_time: datetime
     else:
-        id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+        id: Mapped[UUID] = mapped_column(
+            Uuid, primary_key=True, unique=True, index=True
+        )
         name: Mapped[str] = mapped_column(String(length=64), index=True, nullable=False)
         description: Mapped[str] = mapped_column(Text(length=512), nullable=True)
         created_time: Mapped[datetime] = mapped_column(
@@ -125,6 +127,16 @@ class SQLAlchemyProjectDatabase:
         )
         results = await self.session.execute(statement)
         return results.unique().scalar_one_or_none()
+
+    async def get_all(self):
+        statement = select(self.project_table)
+        results = await self.session.execute(statement)
+        return results.scalars().all()
+
+    async def get_worksites(self, project_id: UUID):
+        statement = select(Worksite).where(Worksite.project_id == project_id)
+        results = await self.session.execute(statement)
+        return results.scalars().all()
 
     async def create(self, project_create: ProjectCreate) -> Project:
         project = self.project_table(**project_create.model_dump())

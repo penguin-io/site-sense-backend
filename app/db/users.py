@@ -1,9 +1,11 @@
+from typing import TYPE_CHECKING
 from collections.abc import AsyncGenerator
 
 from fastapi import Depends
 from fastapi_users.db import SQLAlchemyBaseUserTableUUID, SQLAlchemyUserDatabase
+from sqlalchemy import String
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
-from sqlalchemy.orm import DeclarativeBase
+from sqlalchemy.orm import DeclarativeBase, mapped_column, Mapped
 
 DATABASE_URL = "sqlite+aiosqlite:///./test.db"
 
@@ -13,7 +15,12 @@ class Base(DeclarativeBase):
 
 
 class User(SQLAlchemyBaseUserTableUUID, Base):
-    pass
+    if TYPE_CHECKING:
+        username: str
+    else:
+        username: Mapped[str] = mapped_column(
+            String(length=24), unique=True, index=True, nullable=False
+        )
 
 
 engine = create_async_engine(DATABASE_URL)

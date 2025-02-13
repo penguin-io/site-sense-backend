@@ -1,5 +1,7 @@
 from casbin.enforcer import Enforcer
+from fastapi_users.authentication import JWTStrategy
 from starlette.authentication import BaseUser
+from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
 from starlette.responses import JSONResponse
 from starlette.status import HTTP_403_FORBIDDEN
@@ -15,11 +17,34 @@ from app.manager.users import UserManager
 engine = create_async_engine("sqlite+aiosqlite:///./test.db")
 async_session_factory = async_sessionmaker(engine, expire_on_commit=False)
 
+
 async def get_user_managerx():
     """Returns an instance of UserManager asynchronously without using a generator."""
     async with async_session_factory() as session:
         user_db = SQLAlchemyUserDatabase(session, User)
         return UserManager(user_db)  # Directly return the UserManager instance
+
+
+class AuthMiddleware(BaseHTTPMiddleware):
+    def __init__(self, app, jwt_strategy: JWTStrategy):
+        super().__init__(app)
+        self.jwt_strategy = jwt_strategy
+
+    async def dispatch(self, request: Request, call_next):
+        token = request.headers.get("Authorization")
+        if token and token.startswith("Bearer "):
+            token = token.split(" ")[1]
+            user_manager = await get_user_managerx()
+            print(type(user_manager))
+            user = await self.jwt_strategy.read_token(token, user_manager)
+            if user:
+                request.state.user = user.username
+            else:
+                request.state.user = "anonymous"
+        else:
+            request.state.user = "anonymous"
+        return await call_next(request)
+
 
 class CasbinMiddleware:
     """
@@ -27,9 +52,9 @@ class CasbinMiddleware:
     """
 
     def __init__(
-            self,
-            app: ASGIApp,
-            enforcer: Enforcer,
+        self,
+        app: ASGIApp,
+        enforcer: Enforcer,
     ) -> None:
         """
         Configure Casbin Middleware
@@ -49,10 +74,7 @@ class CasbinMiddleware:
             await self.app(scope, receive, send)
             return
         else:
-            response = JSONResponse(
-                status_code=HTTP_403_FORBIDDEN,
-                content="Forbidden"
-            )
+            response = JSONResponse(status_code=HTTP_403_FORBIDDEN, content="Forbidden")
 
             await response(scope, receive, send)
             return

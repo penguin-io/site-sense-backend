@@ -1,7 +1,7 @@
 from sqlalchemy import select, update, delete
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.db.projects import Worksite, get_async_session
+from app.db.projects import Worksite, get_async_session, Zone
 from app.schemas.worksites import WorksiteCreate, WorksiteUpdate
 from fastapi import Depends
 from uuid import UUID
@@ -21,12 +21,17 @@ class SQLAlchemyWorksiteDatabase:
         self.session = session
         self.worksite_table = worksite_table
 
-    async def get(self, worksite_id: int):
+    async def get(self, worksite_id: UUID):
         statement = select(self.worksite_table).where(
             self.worksite_table.id == worksite_id
         )
         results = await self.session.execute(statement)
         return results.unique().scalar_one_or_none()
+
+    async def get_zones(self, worksite_id: UUID):
+        statement = select(Zone).where(Zone.worksite_id == worksite_id)
+        results = await self.session.execute(statement)
+        return results.scalars().all()
 
     async def create(self, worksite_create: WorksiteCreate) -> Worksite:
         worksite = self.worksite_table(**worksite_create.model_dump())
@@ -39,7 +44,7 @@ class SQLAlchemyWorksiteDatabase:
             return None
         return worksite
 
-    async def update(self, worksite_id: str, worksite_update: WorksiteUpdate):
+    async def update(self, worksite_id: UUID, worksite_update: WorksiteUpdate):
         statement = (
             update(self.worksite_table)
             .where(self.worksite_table.id == worksite_id)
@@ -48,7 +53,7 @@ class SQLAlchemyWorksiteDatabase:
         await self.session.execute(statement)
         await self.session.commit()
 
-    async def delete(self, worksite_id: str):
+    async def delete(self, worksite_id: UUID):
         statement = delete(self.worksite_table).where(
             self.worksite_table.id == worksite_id
         )

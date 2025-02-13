@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, status, HTTPException
 from app.manager.users import current_active_user
 from app.schemas.worksites import WorksiteRead, WorksiteCreate, WorksiteUpdate
+from app.schemas.zones import ZonesRead
 from app.db.users import User
 from app.exceptions import ErrorCode, ErrorModel, InvalidProjectError
 from uuid import UUID
@@ -29,7 +30,7 @@ def get_worksite_router(get_worksite_manager) -> APIRouter:
         response_model=WorksiteRead,
     )
     async def get_worksite(
-        worksite_id: int,
+        worksite_id: UUID,
         worksite_manager=Depends(get_worksite_manager),
     ):
         """
@@ -48,6 +49,15 @@ def get_worksite_router(get_worksite_manager) -> APIRouter:
         if worksite is None:
             raise HTTPException(status_code=404, detail=ErrorCode.WORKSITE_NOT_FOUND)
         return worksite
+
+    @router.get("/{worksite_id}/zones}", response_model=ZonesRead)
+    async def get_zones(
+        worksite_id: UUID,
+        user: User = Depends(current_active_user),
+        worksite_manager=Depends(get_worksite_manager),
+    ):
+        zones = await worksite_manager.get_zones(worksite_id)
+        return zones
 
     @router.post(
         "/",
@@ -99,8 +109,6 @@ def get_worksite_router(get_worksite_manager) -> APIRouter:
             * 403 Forbidden: If the user is not the admin
             * 422 Unprocessable Entity: If the worksite name already exists
         """
-        if not user.is_superuser:
-            raise HTTPException(status_code=403, detail=ErrorCode.ADMIN_REQUIRED)
         try:
             worksite = await worksite_manager.create(worksite)
         except InvalidProjectError:
