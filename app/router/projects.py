@@ -63,7 +63,16 @@ def get_project_router(get_project_manager) -> APIRouter:
                             ErrorCode.ADMIN_REQUIRED: {
                                 "value": {"detail": ErrorCode.ADMIN_REQUIRED}
                             },
-                            ErrorCode.PROJECT_NAME_EXISTS: {
+                        }
+                    }
+                },
+            },
+            status.HTTP_422_UNPROCESSABLE_ENTITY: {
+                "model": ErrorModel,
+                "content": {
+                    "application/json": {
+                        "examples": {
+                            ErrorCode.ADMIN_REQUIRED: {
                                 "value": {"detail": ErrorCode.PROJECT_NAME_EXISTS}
                             },
                         }
@@ -103,6 +112,18 @@ def get_project_router(get_project_manager) -> APIRouter:
         summary="Delete a project",
         status_code=status.HTTP_204_NO_CONTENT,
         responses={
+            status.HTTP_404_NOT_FOUND: {
+                "model": ErrorModel,
+                "content": {
+                    "application/json": {
+                        "examples": {
+                            ErrorCode.PROJECT_NOT_FOUND: {
+                                "value": {"detail": ErrorCode.PROJECT_NOT_FOUND}
+                            }
+                        }
+                    }
+                },
+            },
             status.HTTP_403_FORBIDDEN: {
                 "model": ErrorModel,
                 "content": {
