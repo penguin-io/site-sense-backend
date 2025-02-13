@@ -10,7 +10,7 @@ from app.db.projects import create_project_db_and_tables
 from app.schemas.users import UserCreate, UserRead, UserUpdate
 from app.manager.users import auth_backend, current_active_user, fastapi_users, auth_backend
 from app.router import project_router, worksite_router, zone_router
-from app.casbin import CasbinMiddleware
+from app.casbin import CasbinMiddleware, get_user_managerx
 
 
 @asynccontextmanager
@@ -25,6 +25,8 @@ enforcer = casbin.Enforcer('rbac_model.conf', 'rbac_policy.csv')
 
 
 
+
+
 class AuthMiddleware(BaseHTTPMiddleware):
     def __init__(self, app, jwt_strategy: JWTStrategy):
         super().__init__(app)
@@ -34,21 +36,23 @@ class AuthMiddleware(BaseHTTPMiddleware):
         token = request.headers.get("Authorization")
         if token and token.startswith("Bearer "):
             token = token.split(" ")[1]
-            user_manager = await get_user_manager()
+            user_manager = await get_user_managerx()
+            print(type(user_manager))
             user = await self.jwt_strategy.read_token(token, user_manager)
             if user:
-                request.state.user = user  # Attach the user to request state
+                request.state.user = user.email
             else:
-                raise HTTPException(status_code=401, detail="Invalid authentication token")
+                request.state.user = "anonymous"
         else:
-            raise HTTPException(status_code=401, detail="Authentication required")
-
+            request.state.user = "anonymous"
+        print(request.state.user)
         return await call_next(request)
 
 
+
 app = FastAPI(lifespan=lifespan)
-app.add_middleware(AuthMiddleware, jwt_strategy=auth_backend.get_strategy())
 app.add_middleware(CasbinMiddleware, enforcer=enforcer)
+app.add_middleware(AuthMiddleware, jwt_strategy=auth_backend.get_strategy())
 
 app.include_router(
     fastapi_users.get_auth_router(auth_backend), prefix="/auth/jwt", tags=["auth"]
