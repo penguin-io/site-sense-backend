@@ -14,3 +14,4 @@ source venv/bin/activate
 ```
 3. Install dependencies - `pip install -r requirements.txt`
 4. Start the development server - `uvicorn app.app:app --reload`
+5. After creating initial admin user, grant superuser rights with - `UPDATE user set is_superuser = 1 where is_superuser = 0;` with `sqlite3 test.db`

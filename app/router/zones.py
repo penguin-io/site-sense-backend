@@ -1,58 +1,57 @@
 from fastapi import APIRouter, Depends, status, HTTPException
 from app.manager.users import current_active_user
-from app.schemas.projects import ProjectCreate, ProjectRead, ProjectUpdate
+from app.schemas.zones import ZoneRead, ZoneCreate, ZoneUpdate
 from app.db.users import User
 from app.exceptions import ErrorCode, ErrorModel
-from uuid import UUID
 
 
-def get_project_router(get_project_manager) -> APIRouter:
+def get_zone_router(get_zone_manager) -> APIRouter:
     router = APIRouter()
 
     @router.get(
-        "/{project_id}",
-        summary="Get a project by its id",
+        "/{zone_id}",
+        summary="Get a zone by its id",
         responses={
             status.HTTP_404_NOT_FOUND: {
                 "model": ErrorModel,
                 "content": {
                     "application/json": {
                         "examples": {
-                            ErrorCode.PROJECT_NOT_FOUND: {
-                                "value": {"detail": ErrorCode.PROJECT_NOT_FOUND}
+                            ErrorCode.ZONE_NOT_FOUND: {
+                                "value": {"detail": ErrorCode.ZONE_NOT_FOUND}
                             }
                         }
                     }
                 },
             },
         },
-        response_model=ProjectRead,
+        response_model=ZoneRead,
     )
-    async def get_project(
-        project_id: UUID,
-        project_manager=Depends(get_project_manager),
+    async def get_zone(
+            zone_id: int,
+            zone_manager=Depends(get_zone_manager),
     ):
         """
-        This route returns a project by its id
+        This route returns a zone by its id
         ### Arguments
-        * project_id: The id of the project
+        * zone_id: The id of the zone
 
         ### Response
-        * project (ProjectRead): The requested project
+        * zone (ZoneRead): The requested zone
 
         ### Raises
         * HTTPException:
-            * 404 Not found: If the project doesn't exist
+            * 404 Not found: If the zone doesn't exist
         """
-        project = await project_manager.get(project_id)
-        if project is None:
-            raise HTTPException(status_code=404, detail=ErrorCode.PROJECT_NOT_FOUND)
-        return project
+        zone = await zone_manager.get(zone_id)
+        if zone is None:
+            raise HTTPException(status_code=404, detail=ErrorCode.ZONE_NOT_FOUND)
+        return zone
 
     @router.post(
         "/",
-        summary="Create a new project",
-        response_model=ProjectRead,
+        summary="Create a new zone",
+        response_model=ZoneRead,
         status_code=status.HTTP_201_CREATED,
         responses={
             status.HTTP_403_FORBIDDEN: {
@@ -72,8 +71,8 @@ def get_project_router(get_project_manager) -> APIRouter:
                 "content": {
                     "application/json": {
                         "examples": {
-                            ErrorCode.PROJECT_NAME_EXISTS: {
-                                "value": {"detail": ErrorCode.PROJECT_NAME_EXISTS}
+                            ErrorCode.ADMIN_REQUIRED: {
+                                "value": {"detail": ErrorCode.ZONE_NAME_EXISTS}
                             },
                         }
                     }
@@ -81,45 +80,45 @@ def get_project_router(get_project_manager) -> APIRouter:
             },
         },
     )
-    async def create_project(
-        project: ProjectCreate,
-        user: User = Depends(current_active_user),
-        project_manager=Depends(get_project_manager),
+    async def create_zone(
+            zone: ZoneCreate,
+            user: User = Depends(current_active_user),
+            zone_manager=Depends(get_zone_manager),
     ):
         """
-        This route creates a new project
+        This route creates a new zone
         ### Arguments
-        * project (ProjectCreate): The project to create
+        * zone (ZoneCreate): The zone to create
 
         ### Response
-        * project (ProjectRead): The created project
+        * zone (ZoneRead): The created zone
 
         ### Raises
         * HTTPException:
             * 403 Forbidden: If the user is not the admin
-            * 422 Unprocessable Entity: If the project name already exists
+            * 422 Unprocessable Entity: If the zone name already exists
         """
         if not user.is_superuser:
             raise HTTPException(status_code=403, detail=ErrorCode.ADMIN_REQUIRED)
         try:
-            project = await project_manager.create(project)
+            zone = await zone_manager.create(zone)
         except Exception as e:
-            raise HTTPException(status_code=422, detail=ErrorCode.PROJECT_NAME_EXISTS)
-        return project
+            raise HTTPException(status_code=422, detail=ErrorCode.ZONE_NAME_EXISTS)
+        return zone
 
 
-    @router.patch("/{project_id}")
-    async def update_project(project_id: UUID, project: ProjectUpdate, user: User = Depends(current_active_user), project_manager=Depends(get_project_manager)):
+    @router.patch("/{zone_id}")
+    async def update_zone(zone_id: int, zone: ZoneUpdate, user: User = Depends(current_active_user), zone_manager=Depends(get_zone_manager)):
         if not user.is_superuser:
             raise HTTPException(status_code=403, detail=ErrorCode.ADMIN_REQUIRED)
-        project = await project_manager.update(project_id, project)
-        if project is None:
-            raise HTTPException(status_code=404, detail=ErrorCode.PROJECT_NOT_FOUND)
-        return project
+        zone = await zone_manager.update(zone_id, zone)
+        if zone is None:
+            raise HTTPException(status_code=404, detail=ErrorCode.ZONE_NOT_FOUND)
+        return zone
 
     @router.delete(
-        "/{project_id}",
-        summary="Delete a project",
+        "/{zone_id}",
+        summary="Delete a zone",
         status_code=status.HTTP_204_NO_CONTENT,
         responses={
             status.HTTP_404_NOT_FOUND: {
@@ -127,8 +126,8 @@ def get_project_router(get_project_manager) -> APIRouter:
                 "content": {
                     "application/json": {
                         "examples": {
-                            ErrorCode.PROJECT_NOT_FOUND: {
-                                "value": {"detail": ErrorCode.PROJECT_NOT_FOUND}
+                            ErrorCode.ZONE_NOT_FOUND: {
+                                "value": {"detail": ErrorCode.ZONE_NOT_FOUND}
                             }
                         }
                     }
@@ -148,25 +147,25 @@ def get_project_router(get_project_manager) -> APIRouter:
             },
         },
     )
-    async def delete_project(
-        project_id: UUID,
-        user: User = Depends(current_active_user),
-        project_manager=Depends(get_project_manager),
+    async def delete_zone(
+            zone_id: int,
+            user: User = Depends(current_active_user),
+            zone_manager=Depends(get_zone_manager),
     ):
         """
-        This route deletes a project
+        This route deletes a zone
         ### Arguments
-        * project_id: The id of the project to delete
+        * zone_id: The id of the zone to delete
 
         ### Raises
         * HTTPException:
-            * 404 Not found: If the project doesn't exist
+            * 404 Not found: If the zone doesn't exist
             * 403 Forbidden: If the user is not the admin
         """
         if not user.is_superuser:
             raise HTTPException(status_code=403, detail=ErrorCode.ADMIN_REQUIRED)
-        result = await project_manager.delete(project_id)
+        result = await zone_manager.delete(zone_id)
         if not result:
-            raise HTTPException(status_code=404, detail=ErrorCode.PROJECT_NOT_FOUND)
+            raise HTTPException(status_code=404, detail=ErrorCode.ZONE_NOT_FOUND)
 
     return router

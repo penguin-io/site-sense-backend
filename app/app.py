@@ -1,12 +1,12 @@
 from contextlib import asynccontextmanager
 
-from fastapi import Depends, FastAPI
+from fastapi import FastAPI
 
-from app.db.users import User, create_user_db_and_tables
+from app.db.users import create_user_db_and_tables
 from app.db.projects import create_project_db_and_tables
 from app.schemas.users import UserCreate, UserRead, UserUpdate
 from app.manager.users import auth_backend, current_active_user, fastapi_users
-from app.router import project_router
+from app.router import project_router, worksite_router, zone_router
 
 
 @asynccontextmanager
@@ -46,4 +46,14 @@ app.include_router(
     project_router,
     prefix="/projects",
     tags=["projects"],
+)
+app.include_router(
+    worksite_router,
+    prefix="/worksites",
+    tags=["worksites"],
+)
+app.include_router(
+    zone_router,
+    prefix="/zones",
+    tags=["zones"],
 )

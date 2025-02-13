@@ -1,9 +1,9 @@
 from fastapi import Depends, Request
 from app.db.projects import Project, get_project_db
-from app.schemas.projects import ProjectCreate
+from app.schemas.projects import ProjectCreate, ProjectUpdate
+from uuid import UUID
 
 SECRET = "SECRET"
-
 
 class ProjectManager:
     def __init__(self, project_table):
@@ -11,12 +11,11 @@ class ProjectManager:
 
     verification_token_secret = SECRET
 
-    async def get(self, project_id) -> Project:
+    async def get(self, project_id: UUID) -> Project:
         """
         Fetch a project by its id
 
         :param project_id: The id of the project
-        :raises InvalidProjectException: The project doesn't doesnt
         :return: The requested project
         """
         project = await self.project_table.get(project_id)
@@ -33,7 +32,18 @@ class ProjectManager:
             raise Exception("Error creating project")
         return project
 
-    async def delete(self, project_id):
+    async def update(self, project_id: UUID, project_update: ProjectUpdate) -> Project:
+        """
+        Update an existing project
+        :param project_id: The id of the target project
+        :param project_update: The updated project
+        :return: The updated project
+        """
+        await self.project_table.update(project_id, project_update)
+        project = await self.project_table.get(project_id)
+        return project
+
+    async def delete(self, project_id: UUID):
         """
         Delete a project
         :param project_id: The id of the project to delete
@@ -41,7 +51,6 @@ class ProjectManager:
         """
         result = await self.project_table.delete(project_id)
         return result
-
 
 async def get_project_manager(project_table=Depends(get_project_db)):
     yield ProjectManager(project_table)

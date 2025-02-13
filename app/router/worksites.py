@@ -1,58 +1,58 @@
 from fastapi import APIRouter, Depends, status, HTTPException
 from app.manager.users import current_active_user
-from app.schemas.projects import ProjectCreate, ProjectRead, ProjectUpdate
+from app.schemas.worksites import WorksiteRead, WorksiteCreate, WorksiteUpdate
 from app.db.users import User
-from app.exceptions import ErrorCode, ErrorModel
+from app.exceptions import ErrorCode, ErrorModel, InvalidProjectError
 from uuid import UUID
 
 
-def get_project_router(get_project_manager) -> APIRouter:
+def get_worksite_router(get_worksite_manager) -> APIRouter:
     router = APIRouter()
 
     @router.get(
-        "/{project_id}",
-        summary="Get a project by its id",
+        "/{worksite_id}",
+        summary="Get a worksite by its id",
         responses={
             status.HTTP_404_NOT_FOUND: {
                 "model": ErrorModel,
                 "content": {
                     "application/json": {
                         "examples": {
-                            ErrorCode.PROJECT_NOT_FOUND: {
-                                "value": {"detail": ErrorCode.PROJECT_NOT_FOUND}
+                            ErrorCode.WORKSITE_NOT_FOUND: {
+                                "value": {"detail": ErrorCode.WORKSITE_NOT_FOUND}
                             }
                         }
                     }
                 },
             },
         },
-        response_model=ProjectRead,
+        response_model=WorksiteRead,
     )
-    async def get_project(
-        project_id: UUID,
-        project_manager=Depends(get_project_manager),
+    async def get_worksite(
+            worksite_id: int,
+            worksite_manager=Depends(get_worksite_manager),
     ):
         """
-        This route returns a project by its id
+        This route returns a worksite by its id
         ### Arguments
-        * project_id: The id of the project
+        * worksite_id: The id of the worksite
 
         ### Response
-        * project (ProjectRead): The requested project
+        * worksite (WorksiteRead): The requested worksite
 
         ### Raises
         * HTTPException:
-            * 404 Not found: If the project doesn't exist
+            * 404 Not found: If the worksite doesn't exist
         """
-        project = await project_manager.get(project_id)
-        if project is None:
-            raise HTTPException(status_code=404, detail=ErrorCode.PROJECT_NOT_FOUND)
-        return project
+        worksite = await worksite_manager.get(worksite_id)
+        if worksite is None:
+            raise HTTPException(status_code=404, detail=ErrorCode.WORKSITE_NOT_FOUND)
+        return worksite
 
     @router.post(
         "/",
-        summary="Create a new project",
-        response_model=ProjectRead,
+        summary="Create a new worksite",
+        response_model=WorksiteRead,
         status_code=status.HTTP_201_CREATED,
         responses={
             status.HTTP_403_FORBIDDEN: {
@@ -72,8 +72,8 @@ def get_project_router(get_project_manager) -> APIRouter:
                 "content": {
                     "application/json": {
                         "examples": {
-                            ErrorCode.PROJECT_NAME_EXISTS: {
-                                "value": {"detail": ErrorCode.PROJECT_NAME_EXISTS}
+                            ErrorCode.ADMIN_REQUIRED: {
+                                "value": {"detail": ErrorCode.WORKSITE_NAME_EXISTS}
                             },
                         }
                     }
@@ -81,45 +81,47 @@ def get_project_router(get_project_manager) -> APIRouter:
             },
         },
     )
-    async def create_project(
-        project: ProjectCreate,
-        user: User = Depends(current_active_user),
-        project_manager=Depends(get_project_manager),
+    async def create_worksite(
+            worksite: WorksiteCreate,
+            user: User = Depends(current_active_user),
+            worksite_manager=Depends(get_worksite_manager),
     ):
         """
-        This route creates a new project
+        This route creates a new worksite
         ### Arguments
-        * project (ProjectCreate): The project to create
+        * worksite (WorksiteCreate): The worksite to create
 
         ### Response
-        * project (ProjectRead): The created project
+        * worksite (WorksiteRead): The created worksite
 
         ### Raises
         * HTTPException:
             * 403 Forbidden: If the user is not the admin
-            * 422 Unprocessable Entity: If the project name already exists
+            * 422 Unprocessable Entity: If the worksite name already exists
         """
         if not user.is_superuser:
             raise HTTPException(status_code=403, detail=ErrorCode.ADMIN_REQUIRED)
         try:
-            project = await project_manager.create(project)
+            worksite = await worksite_manager.create(worksite)
+        except InvalidProjectError:
+            raise HTTPException(status_code=422, detail=ErrorCode.PROJECT_NOT_FOUND)
         except Exception as e:
-            raise HTTPException(status_code=422, detail=ErrorCode.PROJECT_NAME_EXISTS)
-        return project
+            raise HTTPException(status_code=422, detail=ErrorCode.WORKSITE_NAME_EXISTS)
+        return worksite
 
 
-    @router.patch("/{project_id}")
-    async def update_project(project_id: UUID, project: ProjectUpdate, user: User = Depends(current_active_user), project_manager=Depends(get_project_manager)):
+    @router.patch("/{worksite_id}")
+    async def update_worksite(worksite_id: UUID, worksite: WorksiteUpdate, user: User = Depends(current_active_user), worksite_manager=Depends(get_worksite_manager)):
         if not user.is_superuser:
             raise HTTPException(status_code=403, detail=ErrorCode.ADMIN_REQUIRED)
-        project = await project_manager.update(project_id, project)
-        if project is None:
-            raise HTTPException(status_code=404, detail=ErrorCode.PROJECT_NOT_FOUND)
-        return project
+        worksite = await worksite_manager.update(worksite_id, worksite)
+        if worksite is None:
+            raise HTTPException(status_code=404, detail=ErrorCode.WORKSITE_NOT_FOUND)
+        return worksite
 
     @router.delete(
-        "/{project_id}",
-        summary="Delete a project",
+        "/{worksite_id}",
+        summary="Delete a worksite",
         status_code=status.HTTP_204_NO_CONTENT,
         responses={
             status.HTTP_404_NOT_FOUND: {
@@ -127,8 +129,8 @@ def get_project_router(get_project_manager) -> APIRouter:
                 "content": {
                     "application/json": {
                         "examples": {
-                            ErrorCode.PROJECT_NOT_FOUND: {
-                                "value": {"detail": ErrorCode.PROJECT_NOT_FOUND}
+                            ErrorCode.WORKSITE_NOT_FOUND: {
+                                "value": {"detail": ErrorCode.WORKSITE_NOT_FOUND}
                             }
                         }
                     }
@@ -148,25 +150,25 @@ def get_project_router(get_project_manager) -> APIRouter:
             },
         },
     )
-    async def delete_project(
-        project_id: UUID,
-        user: User = Depends(current_active_user),
-        project_manager=Depends(get_project_manager),
+    async def delete_worksite(
+            worksite_id: UUID,
+            user: User = Depends(current_active_user),
+            worksite_manager=Depends(get_worksite_manager),
     ):
         """
-        This route deletes a project
+        This route deletes a worksite
         ### Arguments
-        * project_id: The id of the project to delete
+        * worksite_id: The id of the worksite to delete
 
         ### Raises
         * HTTPException:
-            * 404 Not found: If the project doesn't exist
+            * 404 Not found: If the worksite doesn't exist
             * 403 Forbidden: If the user is not the admin
         """
         if not user.is_superuser:
             raise HTTPException(status_code=403, detail=ErrorCode.ADMIN_REQUIRED)
-        result = await project_manager.delete(project_id)
+        result = await worksite_manager.delete(worksite_id)
         if not result:
-            raise HTTPException(status_code=404, detail=ErrorCode.PROJECT_NOT_FOUND)
+            raise HTTPException(status_code=404, detail=ErrorCode.WORKSITE_NOT_FOUND)
 
     return router

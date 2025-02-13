@@ -3,16 +3,18 @@ from datetime import datetime
 from uuid import UUID
 
 
-class ProjectCreate(BaseModel):
+class WorksiteCreate(BaseModel):
     name: str
     description: str | None = None
+    project_id: UUID
 
 
-class ProjectRead(BaseModel):
-    id: UUID
+class WorksiteRead(BaseModel):
+    id: int
     name: str
     description: str | None = None
     created_time: datetime
+    project_id: UUID
 
-class ProjectUpdate(BaseModel):
+class WorksiteUpdate(BaseModel):
     description: str
