@@ -13,16 +13,18 @@ from fastapi_users.db import SQLAlchemyUserDatabase
 from app.db.users import User
 from app.manager.users import UserManager
 
-# Initialize the async engine and session factory once (avoid re-creating it in every call)
 engine = create_async_engine("sqlite+aiosqlite:///./test.db")
 async_session_factory = async_sessionmaker(engine, expire_on_commit=False)
 
 
-async def get_user_managerx():
-    """Returns an instance of UserManager asynchronously without using a generator."""
+user_manager_instance = None
+
+
+async def initialize_user_manager():
+    global user_manager_instance
     async with async_session_factory() as session:
         user_db = SQLAlchemyUserDatabase(session, User)
-        return UserManager(user_db)  # Directly return the UserManager instance
+        user_manager_instance = UserManager(user_db)
 
 
 class AuthMiddleware(BaseHTTPMiddleware):
@@ -34,9 +36,10 @@ class AuthMiddleware(BaseHTTPMiddleware):
         token = request.headers.get("Authorization")
         if token and token.startswith("Bearer "):
             token = token.split(" ")[1]
-            user_manager = await get_user_managerx()
-            print(type(user_manager))
-            user = await self.jwt_strategy.read_token(token, user_manager)
+            global user_manager_instance
+            if user_manager_instance is None:
+                await initialize_user_manager()
+            user = await self.jwt_strategy.read_token(token, user_manager_instance)
             if user:
                 request.state.user = user.username
             else:
@@ -96,6 +99,5 @@ class CasbinMiddleware:
             user = request.state.user
         except:
             user = "anonymous"
-        print(user)
 
         return self.enforcer.enforce(user, path, method)

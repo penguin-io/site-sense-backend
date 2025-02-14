@@ -5,7 +5,7 @@ from uuid import UUID
 
 
 class WorksiteCreate(BaseModel):
-    name: Annotated[str, Field(max_length=64)]
+    name: Annotated[str, Field(min_length=3, max_length=64)]
     description: Optional[Annotated[str, Field(max_length=512)]] = None
     project_id: UUID
 

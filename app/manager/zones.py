@@ -3,6 +3,7 @@ from app.db.projects import Zone
 from app.db.worksites import get_worksite_db
 from app.db.zones import get_zone_db
 from app.schemas.zones import ZoneCreate, ZoneUpdate
+from app.exceptions import InvalidWorksiteError
 from uuid import UUID
 
 

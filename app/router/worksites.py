@@ -32,6 +32,7 @@ def get_worksite_router(get_worksite_manager) -> APIRouter:
     async def get_worksite(
         worksite_id: UUID,
         worksite_manager=Depends(get_worksite_manager),
+        user: User = Depends(current_active_user),
     ):
         """
         This route returns a worksite by its id
@@ -50,13 +51,46 @@ def get_worksite_router(get_worksite_manager) -> APIRouter:
             raise HTTPException(status_code=404, detail=ErrorCode.WORKSITE_NOT_FOUND)
         return worksite
 
-    @router.get("/{worksite_id}/zones}", response_model=ZonesRead)
+    @router.get(
+        "/{worksite_id}/zones}",
+        response_model=ZonesRead,
+        summary="Get all zones of a worksite",
+        responses={
+            status.HTTP_404_NOT_FOUND: {
+                "model": ErrorModel,
+                "content": {
+                    "application/json": {
+                        "examples": {
+                            ErrorCode.WORKSITE_NOT_FOUND: {
+                                "value": {"detail": ErrorCode.WORKSITE_NOT_FOUND}
+                            }
+                        }
+                    }
+                },
+            },
+        },
+    )
     async def get_zones(
         worksite_id: UUID,
         user: User = Depends(current_active_user),
         worksite_manager=Depends(get_worksite_manager),
     ):
+        """
+        This route returns all zones of a worksite
+
+        ### Arguments
+        * worksite_id: The id of the worksite
+
+        ### Response
+        * zones (ZonesRead): The zones of the requested worksite
+
+        ### Raises
+        * HTTPException:
+            * 404 Not found: If the worksite doesn't exist
+        """
         zones = await worksite_manager.get_zones(worksite_id)
+        if zones is None:
+            raise HTTPException(status_code=404, detail=ErrorCode.WORKSITE_NOT_FOUND)
         return zones
 
     @router.post(
@@ -64,32 +98,6 @@ def get_worksite_router(get_worksite_manager) -> APIRouter:
         summary="Create a new worksite",
         response_model=WorksiteRead,
         status_code=status.HTTP_201_CREATED,
-        responses={
-            status.HTTP_403_FORBIDDEN: {
-                "model": ErrorModel,
-                "content": {
-                    "application/json": {
-                        "examples": {
-                            ErrorCode.ADMIN_REQUIRED: {
-                                "value": {"detail": ErrorCode.ADMIN_REQUIRED}
-                            },
-                        }
-                    }
-                },
-            },
-            status.HTTP_422_UNPROCESSABLE_ENTITY: {
-                "model": ErrorModel,
-                "content": {
-                    "application/json": {
-                        "examples": {
-                            ErrorCode.ADMIN_REQUIRED: {
-                                "value": {"detail": ErrorCode.WORKSITE_NAME_EXISTS}
-                            },
-                        }
-                    }
-                },
-            },
-        },
     )
     async def create_worksite(
         worksite: WorksiteCreate,
@@ -103,27 +111,51 @@ def get_worksite_router(get_worksite_manager) -> APIRouter:
 
         ### Response
         * worksite (WorksiteRead): The created worksite
-
-        ### Raises
-        * HTTPException:
-            * 403 Forbidden: If the user is not the admin
-            * 422 Unprocessable Entity: If the worksite name already exists
         """
         try:
             worksite = await worksite_manager.create(worksite)
         except InvalidProjectError:
             raise HTTPException(status_code=422, detail=ErrorCode.PROJECT_NOT_FOUND)
-        except Exception as e:
-            raise HTTPException(status_code=422, detail=ErrorCode.WORKSITE_NAME_EXISTS)
         return worksite
 
-    @router.patch("/{worksite_id}")
+    @router.patch(
+        "/{worksite_id}",
+        summary="Update a worksite",
+        response_model=WorksiteRead,
+        responses={
+            status.HTTP_404_NOT_FOUND: {
+                "model": ErrorModel,
+                "content": {
+                    "application/json": {
+                        "examples": {
+                            ErrorCode.WORKSITE_NOT_FOUND: {
+                                "value": {"detail": ErrorCode.WORKSITE_NOT_FOUND}
+                            }
+                        }
+                    }
+                },
+            },
+        },
+    )
     async def update_worksite(
         worksite_id: UUID,
         worksite: WorksiteUpdate,
         user: User = Depends(current_active_user),
         worksite_manager=Depends(get_worksite_manager),
     ):
+        """
+        This route updates a worksite
+
+        ### Arguments
+        * worksite_id: The id of the worksite to update
+
+        ### Response
+        * worksite (WorksiteRead): The updated worksite
+
+        ### Raises
+        * HTTPException:
+            * 404 Not found: If the worksite doesn't exist
+        """
         if not user.is_superuser:
             raise HTTPException(status_code=403, detail=ErrorCode.ADMIN_REQUIRED)
         worksite = await worksite_manager.update(worksite_id, worksite)
@@ -148,18 +180,6 @@ def get_worksite_router(get_worksite_manager) -> APIRouter:
                     }
                 },
             },
-            status.HTTP_403_FORBIDDEN: {
-                "model": ErrorModel,
-                "content": {
-                    "application/json": {
-                        "examples": {
-                            ErrorCode.ADMIN_REQUIRED: {
-                                "value": {"detail": ErrorCode.ADMIN_REQUIRED}
-                            }
-                        }
-                    }
-                },
-            },
         },
     )
     async def delete_worksite(
@@ -175,10 +195,7 @@ def get_worksite_router(get_worksite_manager) -> APIRouter:
         ### Raises
         * HTTPException:
             * 404 Not found: If the worksite doesn't exist
-            * 403 Forbidden: If the user is not the admin
         """
-        if not user.is_superuser:
-            raise HTTPException(status_code=403, detail=ErrorCode.ADMIN_REQUIRED)
         result = await worksite_manager.delete(worksite_id)
         if not result:
             raise HTTPException(status_code=404, detail=ErrorCode.WORKSITE_NOT_FOUND)

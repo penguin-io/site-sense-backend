@@ -47,7 +47,10 @@ class Project(Base):
         created_time: Mapped[datetime] = mapped_column(
             DateTime, default=datetime.now(timezone.utc), nullable=False
         )
-        worksites: Mapped[List["Worksite"]] = relationship(back_populates="project")
+        worksites: Mapped[List["Worksite"]] = relationship(
+            back_populates="project",
+            cascade="save-update, merge, delete, delete-orphan",
+        )
 
 
 class Worksite(Base):
@@ -61,7 +64,7 @@ class Worksite(Base):
         created_time: datetime
     else:
         id: Mapped[UUID] = mapped_column(
-            Uuid, primary_key=True, unique=True, index=True
+            Uuid, primary_key=True, unique=True, index=True, default=uuid4
         )
         name: Mapped[str] = mapped_column(String(length=64), index=True, nullable=False)
         description: Mapped[str] = mapped_column(Text(length=512), nullable=True)
@@ -70,9 +73,12 @@ class Worksite(Base):
         )
         project: Mapped["Project"] = relationship(back_populates="worksites")
         project_id: Mapped[UUID] = mapped_column(
-            ForeignKey("projects.id"), index=True, nullable=False
+            ForeignKey("projects.id", ondelete="CASCADE"), index=True, nullable=False
         )
-        zones: Mapped[List["Zone"]] = relationship(back_populates="worksite")
+        zones: Mapped[List["Zone"]] = relationship(
+            back_populates="worksite",
+            cascade="save-update, merge, delete, delete-orphan",
+        )
 
 
 class Zone(Base):
@@ -95,7 +101,7 @@ class Zone(Base):
         feed_uri: Mapped[str] = mapped_column(Text(length=512), nullable=True)
         worksite: Mapped["Worksite"] = relationship(back_populates="zones")
         worksite_id: Mapped[int] = mapped_column(
-            ForeignKey("worksites.id"), index=True, nullable=False
+            ForeignKey("worksites.id", ondelete="CASCADE"), index=True, nullable=False
         )
 
         @hybrid_property

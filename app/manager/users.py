@@ -12,7 +12,12 @@ from fastapi_users.db import SQLAlchemyUserDatabase
 
 from app.db.users import User, get_user_db
 
-SECRET = "SECRET"
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
+
+SECRET = os.getenv("TOKEN_SECRET")
 
 
 class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):

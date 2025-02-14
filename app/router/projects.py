@@ -1,13 +1,12 @@
-from typing import List
+from uuid import UUID
+
 from fastapi import APIRouter, Depends, status, HTTPException
+
+from app.db.users import User
+from app.exceptions import ErrorCode, ErrorModel
 from app.manager.users import current_active_user
 from app.schemas.projects import ProjectCreate, ProjectRead, ProjectUpdate, ProjectsRead
 from app.schemas.worksites import WorksitesRead
-from app.db.users import User
-from app.exceptions import ErrorCode, ErrorModel
-from uuid import UUID
-
-from app.schemas.worksites import WorksiteRead
 
 
 def get_project_router(get_project_manager) -> APIRouter:
@@ -17,6 +16,12 @@ def get_project_router(get_project_manager) -> APIRouter:
     async def get_all_projects(
         user=Depends(current_active_user), project_manager=Depends(get_project_manager)
     ):
+        """
+        This route returns all projects
+
+        ### Response
+        * projects (ProjectsRead): The projects list
+        """
         projects = await project_manager.get_all()
         return projects
 
@@ -42,6 +47,7 @@ def get_project_router(get_project_manager) -> APIRouter:
     async def get_project(
         project_id: UUID,
         project_manager=Depends(get_project_manager),
+        user: User = Depends(current_active_user),
     ):
         """
         This route returns a project by its id
@@ -97,7 +103,6 @@ def get_project_router(get_project_manager) -> APIRouter:
             * 404 Not found: If the project doesn't exist
         """
         worksites = await project_manager.get_worksites(project_id)
-        print(worksites)
         if worksites is None:
             raise HTTPException(status_code=404, detail=ErrorCode.PROJECT_NOT_FOUND)
         return worksites
@@ -108,19 +113,6 @@ def get_project_router(get_project_manager) -> APIRouter:
         response_model=ProjectRead,
         status_code=status.HTTP_201_CREATED,
         responses={
-            status.HTTP_403_FORBIDDEN: {
-                "description": "Forbidden",
-                "content": {
-                    "application/json": {
-                        "examples": {
-                            "forbidden": {
-                                "summary": "Forbidden Access",
-                                "value": "Forbidden",
-                            }
-                        }
-                    }
-                },
-            },
             status.HTTP_422_UNPROCESSABLE_ENTITY: {
                 "model": ErrorModel,
                 "content": {
@@ -150,7 +142,6 @@ def get_project_router(get_project_manager) -> APIRouter:
 
         ### Raises
         * HTTPException:
-            * 403 Forbidden: If the user is not the admin
             * 422 Unprocessable Entity: If the project name already exists
         """
         try:
@@ -159,13 +150,29 @@ def get_project_router(get_project_manager) -> APIRouter:
             raise HTTPException(status_code=422, detail=ErrorCode.PROJECT_NAME_EXISTS)
         return project
 
-    @router.patch("/{project_id}")
+    @router.patch(
+        "/{project_id}", summary="Update a project", response_model=ProjectRead
+    )
     async def update_project(
         project_id: UUID,
         project: ProjectUpdate,
         user: User = Depends(current_active_user),
         project_manager=Depends(get_project_manager),
     ):
+        """
+        This route updates a project
+
+        ### Arguments
+        * project_id: The id of the project to update
+        * project (ProjectUpdate): The project to update
+
+        ### Response
+        * project (ProjectRead): The updated project
+
+        ### Raises
+        * HTTPException:
+            * 404 Not found: If the project doesn't exist
+        """
         project = await project_manager.update(project_id, project)
         if project is None:
             raise HTTPException(status_code=404, detail=ErrorCode.PROJECT_NOT_FOUND)
@@ -188,19 +195,6 @@ def get_project_router(get_project_manager) -> APIRouter:
                     }
                 },
             },
-            status.HTTP_403_FORBIDDEN: {
-                "description": "Forbidden",
-                "content": {
-                    "application/json": {
-                        "examples": {
-                            "forbidden": {
-                                "summary": "Forbidden Access",
-                                "value": "Forbidden",
-                            }
-                        }
-                    }
-                },
-            },
         },
     )
     async def delete_project(
@@ -216,7 +210,6 @@ def get_project_router(get_project_manager) -> APIRouter:
         ### Raises
         * HTTPException:
             * 404 Not found: If the project doesn't exist
-            * 403 Forbidden: If the user is not the admin
         """
         result = await project_manager.delete(project_id)
         if not result:

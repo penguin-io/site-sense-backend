@@ -3,6 +3,7 @@ from app.manager.users import current_active_user
 from app.schemas.zones import ZoneRead, ZoneCreate, ZoneUpdate
 from app.db.users import User
 from app.exceptions import ErrorCode, ErrorModel
+from uuid import UUID
 
 
 def get_zone_router(get_zone_manager) -> APIRouter:
@@ -28,7 +29,7 @@ def get_zone_router(get_zone_manager) -> APIRouter:
         response_model=ZoneRead,
     )
     async def get_zone(
-        zone_id: int,
+        zone_id: UUID,
         zone_manager=Depends(get_zone_manager),
     ):
         """
@@ -53,32 +54,6 @@ def get_zone_router(get_zone_manager) -> APIRouter:
         summary="Create a new zone",
         response_model=ZoneRead,
         status_code=status.HTTP_201_CREATED,
-        responses={
-            status.HTTP_403_FORBIDDEN: {
-                "model": ErrorModel,
-                "content": {
-                    "application/json": {
-                        "examples": {
-                            ErrorCode.ADMIN_REQUIRED: {
-                                "value": {"detail": ErrorCode.ADMIN_REQUIRED}
-                            },
-                        }
-                    }
-                },
-            },
-            status.HTTP_422_UNPROCESSABLE_ENTITY: {
-                "model": ErrorModel,
-                "content": {
-                    "application/json": {
-                        "examples": {
-                            ErrorCode.ADMIN_REQUIRED: {
-                                "value": {"detail": ErrorCode.ZONE_NAME_EXISTS}
-                            },
-                        }
-                    }
-                },
-            },
-        },
     )
     async def create_zone(
         zone: ZoneCreate,
@@ -92,29 +67,48 @@ def get_zone_router(get_zone_manager) -> APIRouter:
 
         ### Response
         * zone (ZoneRead): The created zone
-
-        ### Raises
-        * HTTPException:
-            * 403 Forbidden: If the user is not the admin
-            * 422 Unprocessable Entity: If the zone name already exists
         """
-        if not user.is_superuser:
-            raise HTTPException(status_code=403, detail=ErrorCode.ADMIN_REQUIRED)
-        try:
-            zone = await zone_manager.create(zone)
-        except Exception as e:
-            raise HTTPException(status_code=422, detail=ErrorCode.ZONE_NAME_EXISTS)
+        zone = await zone_manager.create(zone)
         return zone
 
-    @router.patch("/{zone_id}")
+    @router.patch(
+        "/{zone_id}",
+        summary="Update a zone",
+        response_model=ZoneRead,
+        responses={
+            status.HTTP_404_NOT_FOUND: {
+                "model": ErrorModel,
+                "content": {
+                    "application/json": {
+                        "examples": {
+                            ErrorCode.ZONE_NOT_FOUND: {
+                                "value": {"detail": ErrorCode.ZONE_NOT_FOUND}
+                            }
+                        }
+                    }
+                },
+            },
+        },
+    )
     async def update_zone(
-        zone_id: int,
+        zone_id: UUID,
         zone: ZoneUpdate,
         user: User = Depends(current_active_user),
         zone_manager=Depends(get_zone_manager),
     ):
-        if not user.is_superuser:
-            raise HTTPException(status_code=403, detail=ErrorCode.ADMIN_REQUIRED)
+        """
+        This route updates a zone
+
+        ### Arguments
+        * zone_id: The id of the zone to update
+
+        ### Response
+        * zone (ZoneRead): The updated zone
+
+        ### Raises
+        * HTTPException:
+            * 404 Not found: If the zone doesn't exist
+        """
         zone = await zone_manager.update(zone_id, zone)
         if zone is None:
             raise HTTPException(status_code=404, detail=ErrorCode.ZONE_NOT_FOUND)
@@ -137,22 +131,10 @@ def get_zone_router(get_zone_manager) -> APIRouter:
                     }
                 },
             },
-            status.HTTP_403_FORBIDDEN: {
-                "model": ErrorModel,
-                "content": {
-                    "application/json": {
-                        "examples": {
-                            ErrorCode.ADMIN_REQUIRED: {
-                                "value": {"detail": ErrorCode.ADMIN_REQUIRED}
-                            }
-                        }
-                    }
-                },
-            },
         },
     )
     async def delete_zone(
-        zone_id: int,
+        zone_id: UUID,
         user: User = Depends(current_active_user),
         zone_manager=Depends(get_zone_manager),
     ):
@@ -164,10 +146,7 @@ def get_zone_router(get_zone_manager) -> APIRouter:
         ### Raises
         * HTTPException:
             * 404 Not found: If the zone doesn't exist
-            * 403 Forbidden: If the user is not the admin
         """
-        if not user.is_superuser:
-            raise HTTPException(status_code=403, detail=ErrorCode.ADMIN_REQUIRED)
         result = await zone_manager.delete(zone_id)
         if not result:
             raise HTTPException(status_code=404, detail=ErrorCode.ZONE_NOT_FOUND)

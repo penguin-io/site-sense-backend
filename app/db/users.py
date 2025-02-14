@@ -7,7 +7,11 @@ from sqlalchemy import String
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.orm import DeclarativeBase, mapped_column, Mapped
 
-DATABASE_URL = "sqlite+aiosqlite:///./test.db"
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
+DATABASE_URL = os.getenv("DB_URL")
 
 
 class Base(DeclarativeBase):
