@@ -1,0 +1,4 @@
+p, anonymous, /docs, GET
+p, anonymous, /openapi.json, GET
+p, anonymous, /auth/*, *
+p, string, /*, *
