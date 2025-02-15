@@ -56,19 +56,10 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
     async def set_access(self, access_request: AccessReq):
         result = await self.user_db.set_access(access_request)
         return result
-        # user = await self.get(access_request.user_id)
-        # if user is None:
-        #    return None
-        # target = None
-        # if access_request.resource_type == "project":
-        #    result = await self.add_projects(user, access_request.resource_ids)
-        # else:
-        #    result = await self.add_worksites(user, access_request.resource_ids)
-        # if access_request.access == "allow":
-        #    target = access_request.resource_ids
-        # else:  # deny
-        #    for resource in access_request.resource_ids:
-        #        target.remove(resource)
+
+    async def get_users(self):
+        result = await self.user_db.get_users()
+        return result
 
 
 async def get_user_manager(user_db: SQLAlchemyUserDatabase = Depends(get_user_db)):

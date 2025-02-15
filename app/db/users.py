@@ -110,6 +110,11 @@ class SQLAlchemyUserDatabase(SQLAlchemyUserDatabaseX):
         results = await self.session.execute(statement)
         return results.unique().scalar_one_or_none()
 
+    async def get_users(self) -> List[User]:
+        statement = select(User)
+        results = await self.session.execute(statement)
+        return results.unique().scalars().all()
+
 
 engine = create_async_engine(DATABASE_URL)
 async_session_maker = async_sessionmaker(engine, expire_on_commit=False)

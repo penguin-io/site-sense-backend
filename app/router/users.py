@@ -1,10 +1,11 @@
+from typing import List
 from fastapi import APIRouter, Depends, HTTPException, Response, status
 
 from app.db.users import User
 from app.exceptions import ErrorCode, ErrorModel
 from app.manager.users import current_active_user, get_user_manager
 from app.manager.worksites import get_worksite_manager
-from app.schemas.users import RoleReq, AccessReq
+from app.schemas.users import RoleReq, AccessReq, UserRead
 from uuid import UUID
 
 
@@ -79,5 +80,13 @@ def get_access_router(
                     )
         result = await user_manager.set_access(access_request)
         return result
+
+    @router.get("/users", response_model=List[UserRead])
+    async def get_users(
+        user: User = Depends(current_active_user),
+        user_manager=Depends(get_user_manager),
+    ):
+        results = await user_manager.get_users()
+        return results
 
     return router

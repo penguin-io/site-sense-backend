@@ -7,6 +7,8 @@ from app.exceptions import ErrorCode, ErrorModel
 from app.manager.users import current_active_user
 from app.schemas.projects import ProjectCreate, ProjectRead, ProjectUpdate, ProjectsRead
 from app.schemas.worksites import WorksitesRead
+from aiokafka import AIOKafkaConsumer
+from app.kafka import send_log_to_kafka
 
 
 def get_project_router(get_project_manager) -> APIRouter:
@@ -23,6 +25,7 @@ def get_project_router(get_project_manager) -> APIRouter:
         * projects (ProjectsRead): The projects list
         """
         projects = await project_manager.get_all()
+        await send_log_to_kafka({"hello": "world"})
         return projects
 
     @router.get(
