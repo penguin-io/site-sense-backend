@@ -20,8 +20,6 @@ async def lifespan(app: FastAPI):
     yield
 
 
-
-
 enforcer = casbin.Enforcer("rbac_model.conf", "rbac_policy.csv")
 app = FastAPI(lifespan=lifespan)
 app.add_middleware(CasbinMiddleware, enforcer=enforcer)

@@ -2,3 +2,6 @@ p, anonymous, /docs, GET
 p, anonymous, /openapi.json, GET
 p, anonymous, /auth/*, *
 p, admin, /*, *
+p, string, /worksites/c40a8311-e098-4c43-9607-e4668779ed30, *
+p, string, /worksites/c40a8311-e098-4c43-9607-e4668779ed30*, *
+p, string, /worksites/036f5389-aa63-487f-964b-62a74d52d995*, *

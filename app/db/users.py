@@ -81,21 +81,29 @@ class SQLAlchemyUserDatabase(SQLAlchemyUserDatabaseX):
             resources = resources.scalars().all()
             if access_request.access == "allow":
                 for r in resources:
-                    target.append(r)
-                    print(r.id)
-                    enforcer.add_policy(
-                        user.username, "/" + access_request.resource_type + "s/" + str(r.id), "*"
-                    )
+                    if not r in target:
+                        target.append(r)
+                        print(r.id, 1111111)
+                        enforcer.add_policy(
+                            user.username,
+                            "/" + access_request.resource_type + "s/" + str(r.id) + "*",
+                            "*",
+                        )
             else:
                 for r in resources:
-                    target.remove(r)
-                    print(r.id)
-                    enforcer.remove_policy(
-                        user.username, "/" + access_request.resource_type + "s/" + str(r.id), "*"
-                    )
+                    if r in target:
+                        target.remove(r)
+                        print(r.id, 1000000)
+                        enforcer.remove_policy(
+                            user.username,
+                            "/" + access_request.resource_type + "s/" + str(r.id) + "*",
+                            "*",
+                        )
             enforcer.save_policy()
             await self.session.commit()
-        except:
+            await self.session.refresh(user)
+        except Exception as e:
+            print(e)
             return None
 
     async def get_by_username(self, username: str) -> User:

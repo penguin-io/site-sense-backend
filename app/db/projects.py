@@ -73,7 +73,9 @@ class Worksite(Base):
         created_time: Mapped[datetime] = mapped_column(
             DateTime, default=datetime.now(timezone.utc), nullable=False
         )
-        project: Mapped["Project"] = relationship(back_populates="worksites")
+        project: Mapped["Project"] = relationship(
+            back_populates="worksites", lazy="joined"
+        )
         project_id: Mapped[UUID] = mapped_column(
             ForeignKey("projects.id", ondelete="CASCADE"), index=True, nullable=False
         )
@@ -99,14 +101,18 @@ class Zone(Base):
         created_time: datetime
         feed_uri: str
     else:
-        id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+        id: Mapped[UUID] = mapped_column(
+            Uuid, primary_key=True, unique=True, index=True, default=uuid4
+        )
         name: Mapped[str] = mapped_column(String(length=64), index=True, nullable=False)
         description: Mapped[str] = mapped_column(Text(length=512), nullable=True)
         created_time: Mapped[datetime] = mapped_column(
             DateTime, default=datetime.now(timezone.utc), nullable=False
         )
         feed_uri: Mapped[str] = mapped_column(Text(length=512), nullable=True)
-        worksite: Mapped["Worksite"] = relationship(back_populates="zones")
+        worksite: Mapped["Worksite"] = relationship(
+            back_populates="zones", lazy="joined"
+        )
         worksite_id: Mapped[int] = mapped_column(
             ForeignKey("worksites.id", ondelete="CASCADE"), index=True, nullable=False
         )

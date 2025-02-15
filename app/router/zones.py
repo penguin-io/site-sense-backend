@@ -31,6 +31,7 @@ def get_zone_router(get_zone_manager) -> APIRouter:
     async def get_zone(
         zone_id: UUID,
         zone_manager=Depends(get_zone_manager),
+        user: User = Depends(current_active_user),
     ):
         """
         This route returns a zone by its id

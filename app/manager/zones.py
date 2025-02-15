@@ -32,6 +32,7 @@ class ZoneManager:
         if worksite is None:
             raise InvalidWorksiteError
         zone = await self.zone_table.create(zone_create)
+        print(999999)
         if zone is None:
             raise Exception("Error creating zone")
         return zone

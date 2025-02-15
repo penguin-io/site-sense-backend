@@ -9,6 +9,7 @@ class UserRead(schemas.BaseUser[uuid.UUID]):
     username: str
     role: Literal["admin", "padmin", "wadmin"]
     project_ids: List[uuid.UUID]
+    worksite_ids: List[uuid.UUID]
 
 
 class UserCreate(schemas.BaseUserCreate):

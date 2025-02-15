@@ -32,6 +32,7 @@ class SQLAlchemyZoneDatabase:
             await self.session.commit()
             await self.session.refresh(zone)
         except Exception as e:
+            print(e)
             await self.session.rollback()
             return None
         return zone

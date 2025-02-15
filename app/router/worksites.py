@@ -1,7 +1,8 @@
+from typing import List
 from fastapi import APIRouter, Depends, status, HTTPException
 from app.manager.users import current_active_user
 from app.schemas.worksites import WorksiteRead, WorksiteCreate, WorksiteUpdate
-from app.schemas.zones import ZonesRead
+from app.schemas.zones import ZoneRead
 from app.db.users import User
 from app.exceptions import ErrorCode, ErrorModel, InvalidProjectError
 from uuid import UUID
@@ -52,8 +53,8 @@ def get_worksite_router(get_worksite_manager) -> APIRouter:
         return worksite
 
     @router.get(
-        "/{worksite_id}/zones}",
-        response_model=ZonesRead,
+        "/{worksite_id}/zones",
+        response_model=List[ZoneRead],
         summary="Get all zones of a worksite",
         responses={
             status.HTTP_404_NOT_FOUND: {
@@ -91,6 +92,7 @@ def get_worksite_router(get_worksite_manager) -> APIRouter:
         zones = await worksite_manager.get_zones(worksite_id)
         if zones is None:
             raise HTTPException(status_code=404, detail=ErrorCode.WORKSITE_NOT_FOUND)
+        print(zones)
         return zones
 
     @router.post(
