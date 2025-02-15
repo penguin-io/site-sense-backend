@@ -4,11 +4,11 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 import casbin
-from app.casbin import CasbinMiddleware, AuthMiddleware
+from app.rbac import CasbinMiddleware, AuthMiddleware
 from app.db.projects import create_project_db_and_tables
 from app.db.users import create_user_db_and_tables
 from app.manager.users import fastapi_users, auth_backend
-from app.router import project_router, worksite_router, zone_router
+from app.router import project_router, worksite_router, zone_router, access_router
 from app.schemas.users import UserCreate, UserRead, UserUpdate
 
 
@@ -77,3 +77,4 @@ app.include_router(
     prefix="/zones",
     tags=["zones"],
 )
+app.include_router(access_router)

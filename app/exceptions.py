@@ -21,3 +21,4 @@ class ErrorCode(str, Enum):
     PROJECT_NAME_EXISTS = "project with same name already exists :("
     WORKSITE_NOT_FOUND = "worksite not found :("
     ZONE_NOT_FOUND = "zone not found :("
+    USER_NOT_FOUND = "user not found :("
