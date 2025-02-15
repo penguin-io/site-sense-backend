@@ -1,6 +1,7 @@
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 
 import casbin
 from app.casbin import CasbinMiddleware, AuthMiddleware
@@ -19,10 +20,24 @@ async def lifespan(app: FastAPI):
     yield
 
 
+
+
 enforcer = casbin.Enforcer("rbac_model.conf", "rbac_policy.csv")
 app = FastAPI(lifespan=lifespan)
 app.add_middleware(CasbinMiddleware, enforcer=enforcer)
 app.add_middleware(AuthMiddleware, jwt_strategy=auth_backend.get_strategy())
+origins = [
+    "http://localhost:3000",
+    "http://localhost:8000",
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 app.include_router(
     fastapi_users.get_auth_router(auth_backend), prefix="/auth/jwt", tags=["auth"]
