@@ -21,10 +21,7 @@ from uuid import UUID, uuid4
 from app.schemas.projects import ProjectCreate, ProjectUpdate
 from app.schemas.worksites import WorksiteCreate, WorksiteUpdate
 from app.schemas.zones import ZoneCreate, ZoneUpdate
-
-
-class Base(DeclarativeBase):
-    pass
+from app.db.base import Base
 
 
 class Project(Base):
@@ -49,7 +46,12 @@ class Project(Base):
         )
         worksites: Mapped[List["Worksite"]] = relationship(
             back_populates="project",
-            cascade="save-update, merge, delete, delete-orphan",
+            cascade="all, delete, delete-orphan",
+            passive_deletes=False,
+        )
+        users: Mapped[List["User"]] = relationship(
+            secondary="project_association",
+            back_populates="projects",
         )
 
 
@@ -77,7 +79,12 @@ class Worksite(Base):
         )
         zones: Mapped[List["Zone"]] = relationship(
             back_populates="worksite",
-            cascade="save-update, merge, delete, delete-orphan",
+            cascade="all, delete, delete-orphan",
+            passive_deletes=False,
+        )
+        users: Mapped[List["User"]] = relationship(
+            secondary="worksite_association",
+            back_populates="worksites",
         )
 
 

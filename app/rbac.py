@@ -9,15 +9,20 @@ from starlette.types import ASGIApp, Receive, Scope, Send
 
 
 from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker
-from fastapi_users.db import SQLAlchemyUserDatabase
-from app.db.users import User
+from app.db.users import SQLAlchemyUserDatabase, User
+from app.db.projects import SQLAlchemyProjectDatabase, Project
+from app.db.worksites import Worksite, SQLAlchemyWorksiteDatabase
 from app.manager.users import UserManager
+from app.manager.worksites import WorksiteManager
+
+from uuid import UUID
 
 engine = create_async_engine("sqlite+aiosqlite:///./test.db")
 async_session_factory = async_sessionmaker(engine, expire_on_commit=False)
 
 
 user_manager_instance = None
+worksite_manager_instance = None
 
 
 async def initialize_user_manager():
@@ -25,6 +30,13 @@ async def initialize_user_manager():
     async with async_session_factory() as session:
         user_db = SQLAlchemyUserDatabase(session, User)
         user_manager_instance = UserManager(user_db)
+
+async def initialize_worksite_manager():
+    global worksite_manager_instance
+    async with async_session_factory() as session:
+        worksite_db = SQLAlchemyWorksiteDatabase(session, Worksite)
+        project_db = SQLAlchemyProjectDatabase(session, Project)
+        worksite_manager_instance = WorksiteManager(worksite_db, project_db)
 
 
 class AuthMiddleware(BaseHTTPMiddleware):
@@ -73,7 +85,7 @@ class CasbinMiddleware:
             await self.app(scope, receive, send)
             return
 
-        if self._enforce(scope, receive) or scope["method"] == "OPTIONS":
+        if (await self._enforce(scope, receive)) or scope["method"] == "OPTIONS":
             await self.app(scope, receive, send)
             return
         else:
@@ -82,7 +94,7 @@ class CasbinMiddleware:
             await response(scope, receive, send)
             return
 
-    def _enforce(self, scope: Scope, receive: Receive) -> bool:
+    async def _enforce(self, scope: Scope, receive: Receive) -> bool:
         """
         Enforce a request
 
@@ -99,5 +111,21 @@ class CasbinMiddleware:
             user = request.state.user
         except:
             user = "anonymous"
+        
+
+        if path.startswith("/worksites/"):
+            worksite_id = path.split("/")[-1]
+            if worksite_id == '':
+                return self.enforcer.enforce(user, path, method)
+            worksite_id = UUID(worksite_id)
+            if worksite_manager_instance is None:
+                await initialize_worksite_manager()
+            worksite = await worksite_manager_instance.get(worksite_id)
+            if worksite is None:
+                return None
+            project_ids = (await user_manager_instance.get_by_username(user)).project_ids
+            if worksite.project_id not in project_ids:
+                return None
+            return True
 
         return self.enforcer.enforce(user, path, method)

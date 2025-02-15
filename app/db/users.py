@@ -1,21 +1,39 @@
-from typing import TYPE_CHECKING
+from sqlalchemy import select
+from typing import TYPE_CHECKING, List
 from collections.abc import AsyncGenerator
 
 from fastapi import Depends
-from fastapi_users.db import SQLAlchemyBaseUserTableUUID, SQLAlchemyUserDatabase
-from sqlalchemy import String
+from fastapi_users.db import SQLAlchemyBaseUserTableUUID
+from fastapi_users.db import SQLAlchemyUserDatabase as SQLAlchemyUserDatabaseX
+from sqlalchemy import String, Column, ForeignKey, Table
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
-from sqlalchemy.orm import DeclarativeBase, mapped_column, Mapped
+from sqlalchemy.orm import DeclarativeBase, mapped_column, Mapped, relationship
+from sqlalchemy.ext.associationproxy import association_proxy, AssociationProxy
+
+from app.db.projects import Project, Worksite
+from app.db.base import Base
 
 import os
 from dotenv import load_dotenv
+from uuid import UUID
+import casbin
 
 load_dotenv()
 DATABASE_URL = os.getenv("DB_URL")
 
 
-class Base(DeclarativeBase):
-    pass
+project_association = Table(
+    "project_association",
+    Base.metadata,
+    Column("user", ForeignKey("user.id"), primary_key=True),
+    Column("project", ForeignKey("projects.id"), primary_key=True),
+)
+worksite_association = Table(
+    "worksite_association",
+    Base.metadata,
+    Column("user", ForeignKey("user.id"), primary_key=True),
+    Column("worksite", ForeignKey("worksites.id"), primary_key=True),
+)
 
 
 class User(SQLAlchemyBaseUserTableUUID, Base):
@@ -25,6 +43,65 @@ class User(SQLAlchemyBaseUserTableUUID, Base):
         username: Mapped[str] = mapped_column(
             String(length=24), unique=True, index=True, nullable=False
         )
+        role: Mapped[str] = mapped_column(
+            String(length=24), nullable=False, default="wadmin"
+        )
+        projects: Mapped[List[Project]] = relationship(
+            lazy="joined", secondary=project_association, back_populates="users"
+        )
+        worksites: Mapped[List[Worksite]] = relationship(
+            lazy="joined", secondary=worksite_association, back_populates="users"
+        )
+
+        project_ids: AssociationProxy[List[UUID]] = association_proxy("projects", "id")
+        worksite_ids: AssociationProxy[List[UUID]] = association_proxy(
+            "worksites", "id"
+        )
+
+
+class SQLAlchemyUserDatabase(SQLAlchemyUserDatabaseX):
+    """Database adapter for SQLAlchemy."""
+
+    async def set_access(self, access_request):
+        enforcer = casbin.Enforcer("rbac_model.conf", "rbac_policy.csv")
+        try:
+            user = await self.get(access_request.user_id)
+            resources = None
+            target = None
+            if access_request.resource_type == "project":
+                resources = await self.session.execute(
+                    select(Project).where(Project.id.in_(access_request.resource_ids))
+                )
+                target = user.projects
+            else:
+                resources = await self.session.execute(
+                    select(Worksite).where(Worksite.id.in_(access_request.resource_ids))
+                )
+                target = user.worksites
+            resources = resources.scalars().all()
+            if access_request.access == "allow":
+                for r in resources:
+                    target.append(r)
+                    print(r.id)
+                    enforcer.add_policy(
+                        user.username, "/" + access_request.resource_type + "s/" + str(r.id), "*"
+                    )
+            else:
+                for r in resources:
+                    target.remove(r)
+                    print(r.id)
+                    enforcer.remove_policy(
+                        user.username, "/" + access_request.resource_type + "s/" + str(r.id), "*"
+                    )
+            enforcer.save_policy()
+            await self.session.commit()
+        except:
+            return None
+
+    async def get_by_username(self, username: str) -> User:
+        statement = select(User).where(User.username == username)
+        results = await self.session.execute(statement)
+        return results.unique().scalar_one_or_none()
 
 
 engine = create_async_engine(DATABASE_URL)
