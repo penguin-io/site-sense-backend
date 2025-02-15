@@ -10,14 +10,16 @@ class UserRead(schemas.BaseUser[uuid.UUID]):
     role: Literal["admin", "padmin", "wadmin"]
     project_ids: List[uuid.UUID]
     worksite_ids: List[uuid.UUID]
+    organization: str
 
 
 class UserCreate(schemas.BaseUserCreate):
     username: Annotated[str, Field(min_length=3, max_length=24)]
+    organization: Optional[Annotated[str, Field(max_length=24)]]
 
 
 class UserUpdate(schemas.BaseUserUpdate):
-    pass
+    organization: Optional[Annotated[str, Field(max_length=24)]]
 
 
 class RoleReq(BaseModel):

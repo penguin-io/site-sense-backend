@@ -46,6 +46,7 @@ class User(SQLAlchemyBaseUserTableUUID, Base):
         role: Mapped[str] = mapped_column(
             String(length=24), nullable=False, default="wadmin"
         )
+        organization: Mapped[str] = mapped_column(String(length=24), nullable=True)
         projects: Mapped[List[Project]] = relationship(
             lazy="joined", secondary=project_association, back_populates="users"
         )
@@ -83,7 +84,6 @@ class SQLAlchemyUserDatabase(SQLAlchemyUserDatabaseX):
                 for r in resources:
                     if not r in target:
                         target.append(r)
-                        print(r.id, 1111111)
                         enforcer.add_policy(
                             user.username,
                             "/" + access_request.resource_type + "s/" + str(r.id) + "*",
@@ -93,7 +93,6 @@ class SQLAlchemyUserDatabase(SQLAlchemyUserDatabaseX):
                 for r in resources:
                     if r in target:
                         target.remove(r)
-                        print(r.id, 1000000)
                         enforcer.remove_policy(
                             user.username,
                             "/" + access_request.resource_type + "s/" + str(r.id) + "*",
