@@ -11,7 +11,7 @@ services:
       DOCKER_INFLUXDB_INIT_PASSWORD_FILE: /run/secrets/influxdb2-admin-password
       DOCKER_INFLUXDB_INIT_ADMIN_TOKEN_FILE: /run/secrets/influxdb2-admin-token
       DOCKER_INFLUXDB_INIT_ORG: docs
-      DOCKER_INFLUXDB_INIT_BUCKET: home
+      DOCKER_INFLUXDB_INIT_BUCKET: logs
     secrets:
       - influxdb2-admin-username
       - influxdb2-admin-password
@@ -25,9 +25,9 @@ services:
     container_name: postgres
     restart: always
     environment:
-      POSTGRES_USER_FILE: /run/secrets/postgres-user
+      POSTGRES_USER: /run/secrets/postgres-user
       POSTGRES_PASSWORD_FILE: /run/secrets/postgres-password
-      POSTGRES_DB: mydatabase
+      POSTGRES_DB: "sitesense"
     ports:
       - 5432:5432
     secrets:
@@ -48,7 +48,7 @@ services:
       INFLUXDB_ORG: "docs"
       INFLUXDB_BUCKET: "logs"
       INFLUXDB_TOKEN_FILE: "/run/secrets/influxdb2-admin-token"
-      POSTGRES_HOST: "127.0.0.1"
+      POSTGRES_HOST: "0.0.0.0"
       POSTGRES_DB: "sitesense"
       POSTGRES_USER_FILE: "/run/secrets/postgres-user"
       POSTGRES_PASSWORD_FILE: "/run/secrets/postgres-password"
