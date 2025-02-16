@@ -121,6 +121,9 @@ class Zone(Base):
             DateTime, default=datetime.now(timezone.utc), nullable=False
         )
         feed_uri: Mapped[str] = mapped_column(Text(length=512), nullable=True)
+        activity: Mapped[str] = mapped_column(
+            String(length=36), nullable=False, default="inactive"
+        )
         worksite: Mapped["Worksite"] = relationship(
             back_populates="zones", lazy="joined"
         )

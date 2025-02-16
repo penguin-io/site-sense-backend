@@ -1,0 +1,75 @@
+version: '3.8'
+
+services:
+  influxdb2:
+    image: influxdb:2
+    ports:
+      - 8086:8086
+    environment:
+      DOCKER_INFLUXDB_INIT_MODE: setup
+      DOCKER_INFLUXDB_INIT_USERNAME_FILE: /run/secrets/influxdb2-admin-username
+      DOCKER_INFLUXDB_INIT_PASSWORD_FILE: /run/secrets/influxdb2-admin-password
+      DOCKER_INFLUXDB_INIT_ADMIN_TOKEN_FILE: /run/secrets/influxdb2-admin-token
+      DOCKER_INFLUXDB_INIT_ORG: docs
+      DOCKER_INFLUXDB_INIT_BUCKET: home
+    secrets:
+      - influxdb2-admin-username
+      - influxdb2-admin-password
+      - influxdb2-admin-token
+    volumes:
+      - influxdb2-data:/var/lib/influxdb2
+      - influxdb2-config:/etc/influxdb2
+
+  postgres:
+    image: postgres:16
+    container_name: postgres
+    restart: always
+    environment:
+      POSTGRES_USER_FILE: /run/secrets/postgres-user
+      POSTGRES_PASSWORD_FILE: /run/secrets/postgres-password
+      POSTGRES_DB: mydatabase
+    ports:
+      - "5432:5432"
+    secrets:
+      - postgres-user
+      - postgres-password
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+
+  app:
+    build: .
+    depends_on:
+      - influxdb2
+      - postgres
+    environment:
+      INFLUXDB_URL: "http://influxdb2:8086"
+      INFLUXDB_ORG: "docs"
+      INFLUXDB_BUCKET: "home"
+      INFLUXDB_TOKEN_FILE: "/run/secrets/influxdb2-admin-token"
+      POSTGRES_HOST: "postgres"
+      POSTGRES_DB: "mydatabase"
+      POSTGRES_USER_FILE: "/run/secrets/postgres-user"
+      POSTGRES_PASSWORD_FILE: "/run/secrets/postgres-password"
+    secrets:
+      - influxdb2-admin-token
+      - postgres-user
+      - postgres-password
+    volumes:
+      - ./app:/app
+
+secrets:
+  influxdb2-admin-username:
+    file: ~/.env.influxdb2-admin-username
+  influxdb2-admin-password:
+    file: ~/.env.influxdb2-admin-password
+  influxdb2-admin-token:
+    file: ~/.env.influxdb2-admin-token
+  postgres-user:
+    file: ~/.env.postgres-user
+  postgres-password:
+    file: ~/.env.postgres-password
+
+volumes:
+  influxdb2-data:
+  influxdb2-config:
+  postgres-data:
