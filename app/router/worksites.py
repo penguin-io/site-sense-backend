@@ -11,6 +11,14 @@ from uuid import UUID
 def get_worksite_router(get_worksite_manager) -> APIRouter:
     router = APIRouter()
 
+    @router.get("/all")
+    async def get_all_worksites(
+        user: User = Depends(current_active_user),
+        worksite_manager=Depends(get_worksite_manager),
+    ):
+        worksites = await worksite_manager.get_all()
+        return worksites
+
     @router.get(
         "/{worksite_id}",
         summary="Get a worksite by its id",
@@ -51,14 +59,6 @@ def get_worksite_router(get_worksite_manager) -> APIRouter:
         if worksite is None:
             raise HTTPException(status_code=404, detail=ErrorCode.WORKSITE_NOT_FOUND)
         return worksite
-
-    @router.get("/all")
-    async def get_all_worksites(
-        user: User = Depends(current_active_user),
-        worksite_manager=Depends(get_worksite_manager),
-    ):
-        worksites = await worksite_manager.get_all()
-        return worksites
 
     @router.get("/")
     async def get_user_worksites(

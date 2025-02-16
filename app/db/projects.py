@@ -25,6 +25,10 @@ from app.schemas.projects import ProjectCreate, ProjectUpdate
 from app.schemas.worksites import WorksiteCreate, WorksiteUpdate
 from app.schemas.zones import ZoneCreate, ZoneUpdate
 from app.db.base import Base
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
 
 
 class Project(Base):
@@ -210,7 +214,8 @@ class SQLAlchemyProjectDatabase:
         return True
 
 
-DATABASE_URL = "sqlite+aiosqlite:///./test.db"
+DATABASE_URL = os.getenv("DB_URL")
+
 engine = create_async_engine(DATABASE_URL)
 async_session_maker = async_sessionmaker(engine, expire_on_commit=False)
 

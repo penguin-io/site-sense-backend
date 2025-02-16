@@ -17,6 +17,10 @@ from sqlalchemy.orm import Mapped, mapped_column
 
 from app.db.base import Base
 from app.schemas.employees import EmployeeCreate, EmployeeUpdate
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
 
 
 class Employee(Base):
@@ -98,7 +102,7 @@ class SQLAlchemyEmployeeDatabase:
         return True
 
 
-DATABASE_URL = "sqlite+aiosqlite:///./test.db"
+DATABASE_URL = os.getenv("DB_URL")
 engine = create_async_engine(DATABASE_URL)
 async_session_maker = async_sessionmaker(engine, expire_on_commit=False)
 
