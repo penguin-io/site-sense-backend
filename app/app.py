@@ -6,9 +6,16 @@ from fastapi.middleware.cors import CORSMiddleware
 import casbin
 from app.rbac import CasbinMiddleware, AuthMiddleware
 from app.db.projects import create_project_db_and_tables
+from app.db.employees import create_employee_db_and_tables
 from app.db.users import create_user_db_and_tables
 from app.manager.users import fastapi_users, auth_backend
-from app.router import project_router, worksite_router, zone_router, access_router
+from app.router import (
+    project_router,
+    worksite_router,
+    zone_router,
+    access_router,
+    employees_router,
+)
 from app.schemas.users import UserCreate, UserRead, UserUpdate
 
 
@@ -17,6 +24,7 @@ async def lifespan(app: FastAPI):
     # Not needed if you setup a migration system like Alembic
     await create_user_db_and_tables()
     await create_project_db_and_tables()
+    await create_user_db_and_tables()
     yield
 
 
@@ -76,3 +84,4 @@ app.include_router(
     tags=["zones"],
 )
 app.include_router(access_router)
+app.include_router(employees_router, prefix="/employees", tags=["employees"])

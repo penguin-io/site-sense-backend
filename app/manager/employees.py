@@ -6,6 +6,7 @@ from fastapi import Depends
 from app.db.employees import Employee, get_employee_db
 from app.schemas.employees import EmployeeCreate, EmployeeUpdate
 
+
 class EmployeeManager:
     def __init__(self, employee_table):
         self.employee_table = employee_table
@@ -20,6 +21,9 @@ class EmployeeManager:
         worksites = await self.employee_table.get(employee_id)
         return worksites
 
+    async def get_employees(self) -> List[Employee]:
+        employees = await self.employee_table.get_all()
+        return employees
 
     async def create(self, employee_create: EmployeeCreate) -> Employee:
         """
@@ -32,8 +36,9 @@ class EmployeeManager:
             raise Exception("Error creating employee")
         return employee
 
-
-    async def update(self, employee_id: UUID, employee_update: EmployeeUpdate) -> Employee:
+    async def update(
+        self, employee_id: UUID, employee_update: EmployeeUpdate
+    ) -> Employee:
         """
         Update an existing employee
         :param employee_id: The id of the target employee
@@ -43,7 +48,6 @@ class EmployeeManager:
         await self.employee_table.update(employee_id, employee_update)
         employee = await self.employee_table.get(employee_id)
         return employee
-
 
     async def delete(self, employee_id: UUID):
         """
@@ -55,3 +59,5 @@ class EmployeeManager:
         return result
 
 
+async def get_employee_manager(employee_table=Depends(get_employee_db)):
+    yield EmployeeManager(employee_table)

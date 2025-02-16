@@ -13,7 +13,8 @@ from sqlalchemy import (
     update,
     Integer,
     ForeignKey,
-    Boolean, Float,
+    Boolean,
+    Float,
 )
 from datetime import datetime, timezone
 from fastapi import Depends
@@ -54,9 +55,7 @@ class Project(Base):
             secondary="project_association",
             back_populates="projects",
         )
-        location: Mapped[str] = mapped_column(
-            String(length=36), nullable=True
-        )
+        location: Mapped[str] = mapped_column(String(length=36), nullable=True)
 
 
 class Worksite(Base):
@@ -92,16 +91,9 @@ class Worksite(Base):
             secondary="worksite_association",
             back_populates="worksites",
         )
-        status: Mapped[bool] = mapped_column(
-            Boolean, default=False, nullable=False
-        )
-        lat: Mapped[float] = mapped_column(
-            Float, nullable=True
-        )
-        long: Mapped[float] = mapped_column(
-            Float, nullable=True
-        )
-
+        status: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+        lat: Mapped[float] = mapped_column(Float, nullable=True)
+        long: Mapped[float] = mapped_column(Float, nullable=True)
 
 
 class Zone(Base):

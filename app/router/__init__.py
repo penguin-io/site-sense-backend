@@ -2,10 +2,12 @@ from app.manager.projects import get_project_manager
 from app.manager.worksites import get_worksite_manager
 from app.manager.zones import get_zone_manager
 from app.manager.users import get_user_manager
+from app.manager.employees import get_employee_manager
 from .projects import get_project_router
 from .worksites import get_worksite_router
 from .zones import get_zone_router
 from .users import get_access_router
+from .employees import get_employees_router
 from fastapi import APIRouter
 
 
@@ -45,6 +47,17 @@ class access_router:
         )
 
 
+class employees_router:
+    def __init__(self, get_employee_manager, get_worksite_manager):
+        self.get_employee_manager = get_employee_manager
+        self.get_worksite_manager = get_worksite_manager
+
+    def get_employees_router(self):
+        return get_employees_router(
+            self.get_employee_manager, self.get_worksite_manager
+        )
+
+
 project_router = project_router(get_project_manager)
 router = APIRouter()
 router.include_router(project_router.get_project_router())
@@ -66,3 +79,8 @@ access_router = access_router(
 router = APIRouter()
 router.include_router(access_router.get_access_router())
 access_router = router
+
+employees_router = employees_router(get_employee_manager, get_worksite_manager)
+router = APIRouter()
+router.include_router(employees_router.get_employees_router())
+employees_router = router
