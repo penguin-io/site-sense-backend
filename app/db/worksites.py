@@ -1,10 +1,12 @@
 from sqlalchemy import select, update, delete
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.db.projects import Worksite, get_async_session, Zone
+from app.db.projects import Worksite, get_async_session, Zone, Project
+from app.db.users import User
 from app.schemas.worksites import WorksiteCreate, WorksiteUpdate
 from fastapi import Depends
 from uuid import UUID
+from app.db.employees import Employee, SQLAlchemyEmployeeDatabase
 
 
 class SQLAlchemyWorksiteDatabase:
@@ -27,6 +29,23 @@ class SQLAlchemyWorksiteDatabase:
         )
         results = await self.session.execute(statement)
         return results.unique().scalar_one_or_none()
+
+    async def get_accessible_worksites(self, user_id):
+        response = set()
+        statement = select(User).where(User.id == user_id)
+        user = (await self.session.execute(statement)).unique().scalar_one_or_none()
+        for project_id in user.project_ids:
+            statement = select(Project).where(Project.id == project_id)
+            project = (
+                (await self.session.execute(statement)).unique().scalar_one_or_none()
+            )
+            for worksite_id in project.worksite_ids:
+                worksite = self.get(worksite_id)
+                response.add(worksite)
+        for worksite_id in user.worksite_ids:
+            worksite = self.get(worksite_id)
+            response.add(worksite)
+        return response
 
     async def get_zones(self, worksite_id: UUID):
         statement = select(Zone).where(Zone.worksite_id == worksite_id)

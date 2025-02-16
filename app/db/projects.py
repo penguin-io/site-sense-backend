@@ -119,7 +119,7 @@ class Zone(Base):
         worksite: Mapped["Worksite"] = relationship(
             back_populates="zones", lazy="joined"
         )
-        worksite_id: Mapped[int] = mapped_column(
+        worksite_ids: Mapped[int] = mapped_column(
             ForeignKey("worksites.id", ondelete="CASCADE"), index=True, nullable=False
         )
         location: Mapped[str] = mapped_column(String(length=36), nullable=True)

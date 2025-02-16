@@ -4,11 +4,10 @@ from fastapi import APIRouter, Depends, status, HTTPException
 
 from app.db.users import User
 from app.exceptions import ErrorCode, ErrorModel
+from app.kafka import send_log_to_kafka
 from app.manager.users import current_active_user
 from app.schemas.projects import ProjectCreate, ProjectRead, ProjectUpdate, ProjectsRead
 from app.schemas.worksites import WorksitesRead
-from aiokafka import AIOKafkaConsumer
-from app.kafka import send_log_to_kafka
 
 
 def get_project_router(get_project_manager) -> APIRouter:
@@ -25,7 +24,6 @@ def get_project_router(get_project_manager) -> APIRouter:
         * projects (ProjectsRead): The projects list
         """
         projects = await project_manager.get_all()
-        await send_log_to_kafka({"hello": "world"})
         return projects
 
     @router.get(
@@ -68,6 +66,16 @@ def get_project_router(get_project_manager) -> APIRouter:
         if project is None:
             raise HTTPException(status_code=404, detail=ErrorCode.PROJECT_NOT_FOUND)
         return project
+
+    @router.get("/")
+    async def get_user_projects(
+        user: User = Depends(current_active_user),
+        project_manager=Depends(get_project_manager),
+    ):
+        projects = []
+        for project_id in user.project_ids:
+            projects.append(await project_manager.get(project_id))
+        return projects
 
     @router.get(
         "/{project_id}/worksites",

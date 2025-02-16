@@ -1,21 +1,22 @@
+import uuid
 from typing import TYPE_CHECKING, AsyncGenerator
-from fastapi import Depends
 from uuid import UUID
-from sqlalchemy.orm import Mapped, mapped_column
+
+from fastapi import Depends
 from sqlalchemy import (
     Uuid,
     String,
+    Boolean,
     select,
     update,
     delete,
     Integer,
 )
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
-from app.db.base import Base
-from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
-from app.schemas.employees import EmployeeCreate, EmployeeUpdate
+from sqlalchemy.orm import Mapped, mapped_column
 
-import uuid
+from app.db.base import Base
+from app.schemas.employees import EmployeeCreate, EmployeeUpdate
 
 
 class Employee(Base):
@@ -27,6 +28,7 @@ class Employee(Base):
         phone: int
         role: str
         organization: str
+        logged_in: bool
     else:
         id: Mapped[uuid.UUID] = mapped_column(
             Uuid, primary_key=True, index=True, default=uuid.uuid4
@@ -36,6 +38,7 @@ class Employee(Base):
         phone: Mapped[int] = mapped_column(Integer, nullable=False)
         role: Mapped[str] = mapped_column(String(length=36), nullable=True)
         organization: Mapped[str] = mapped_column(String(length=36), nullable=True)
+        logged_in: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
 
 
 class SQLAlchemyEmployeeDatabase:

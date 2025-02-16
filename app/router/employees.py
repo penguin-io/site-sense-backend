@@ -1,23 +1,25 @@
+from time import time
 from typing import List
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException
 
-from app.db.employees import Employee
-from app.manager.users import current_active_user
-from app.schemas.employees import AttendanceReq, EmployeeCreate, EmployeeUpdate, EmployeeRead
-from app.kafka import send_log_to_kafka
-from app.manager.worksites import get_worksite_manager
-from app.manager.employees import get_employee_manager
 from app.db.users import User
-from time import time
+from app.kafka import send_log_to_kafka
+from app.manager.users import current_active_user
+from app.schemas.employees import (
+    AttendanceReq,
+    EmployeeCreate,
+    EmployeeUpdate,
+    EmployeeRead,
+)
 
 
 def get_employees_router(get_employee_manager, get_worksite_manager):
     router = APIRouter()
 
-    @router.post("/attendance")
-    async def attendance(
+    @router.post("/login")
+    async def login(
         attendance_request: AttendanceReq,
         user: User = Depends(current_active_user),
         employee_manager=Depends(get_employee_manager),
@@ -31,13 +33,37 @@ def get_employees_router(get_employee_manager, get_worksite_manager):
             )
         log = {
             "event": "attendance",
+            "type": "login",
             "data": {
                 "worksite_id": str(attendance_request.worksite_id),
                 "employee_id": str(attendance_request.employee_id),
-                "time": time()
+                "time": time(),
             },
         }
-        print(log)
+        await send_log_to_kafka(log)
+
+    @router.post("/logout")
+    async def logout(
+        attendance_request: AttendanceReq,
+        user: User = Depends(current_active_user),
+        employee_manager=Depends(get_employee_manager),
+        worksite_manager=Depends(get_worksite_manager),
+    ):
+        worksite = await worksite_manager.get(attendance_request.worksite_id)
+        employee = await employee_manager.get(attendance_request.employee_id)
+        if worksite is None or employee is None:
+            raise HTTPException(
+                status_code=404, detail="Worksite or employee not found"
+            )
+        log = {
+            "event": "attendance",
+            "type": "logout",
+            "data": {
+                "worksite_id": str(attendance_request.worksite_id),
+                "employee_id": str(attendance_request.employee_id),
+                "time": time(),
+            },
+        }
         await send_log_to_kafka(log)
 
     @router.post("/add", response_model=EmployeeRead)

@@ -22,6 +22,9 @@ class WorksiteManager:
         worksite = await self.worksite_table.get(worksite_id)
         return worksite
 
+    async def get_accessible_worksites(self, user_id) -> List[Worksite]:
+        return self.worksite_table.get_accessible_worksites(user_id)
+
     async def get_zones(self, worksite_id: UUID) -> List[Zone]:
         """
         Fetch all zones for a worksite

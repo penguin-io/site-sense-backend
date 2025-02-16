@@ -52,6 +52,14 @@ def get_worksite_router(get_worksite_manager) -> APIRouter:
             raise HTTPException(status_code=404, detail=ErrorCode.WORKSITE_NOT_FOUND)
         return worksite
 
+    @router.get("/")
+    async def get_user_worksites(
+        user: User = Depends(current_active_user),
+        worksite_manager=Depends(get_worksite_manager),
+    ):
+        worksites = await worksite_manager.get_accessible_worksites(user.id)
+        return worksites
+
     @router.get(
         "/{worksite_id}/zones",
         response_model=List[ZoneRead],

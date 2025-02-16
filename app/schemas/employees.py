@@ -23,5 +23,6 @@ class EmployeeUpdate(BaseModel):
     role: Optional[Annotated[str, Field(max_length=36)]] = None
     organization: Optional[Annotated[str, Field(max_length=36)]] = None
 
+
 class EmployeeRead(EmployeeCreate):
     id: UUID
