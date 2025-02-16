@@ -1,28 +1,28 @@
+from uuid import UUID
+
 from casbin.enforcer import Enforcer
 from fastapi_users.authentication import JWTStrategy
-from starlette.authentication import BaseUser
+from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
 from starlette.responses import JSONResponse
 from starlette.status import HTTP_403_FORBIDDEN
 from starlette.types import ASGIApp, Receive, Scope, Send
 
-
-from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker
-from app.db.users import SQLAlchemyUserDatabase, User
 from app.db.projects import SQLAlchemyProjectDatabase, Project
+from app.db.users import SQLAlchemyUserDatabase, User
 from app.db.worksites import Worksite, SQLAlchemyWorksiteDatabase
 from app.db.zones import SQLAlchemyZoneDatabase, Zone
+from app.manager.projects import ProjectManager
 from app.manager.users import UserManager
 from app.manager.worksites import WorksiteManager
 from app.manager.zones import ZoneManager
-
-from uuid import UUID
 
 engine = create_async_engine("sqlite+aiosqlite:///./test.db")
 async_session_factory = async_sessionmaker(engine, expire_on_commit=False)
 
 
+project_manager_instance = None
 user_manager_instance = None
 worksite_manager_instance = None
 zone_manager_instance = None
@@ -33,6 +33,13 @@ async def initialize_user_manager():
     async with async_session_factory() as session:
         user_db = SQLAlchemyUserDatabase(session, User)
         user_manager_instance = UserManager(user_db)
+
+
+async def initialize_project_manager():
+    global project_manager_instance
+    async with async_session_factory() as session:
+        project_db = SQLAlchemyProjectDatabase(session, Project)
+        project_manager_instance = ProjectManager(project_db)
 
 
 async def initialize_worksite_manager():
@@ -127,6 +134,23 @@ class CasbinMiddleware:
 
         if path.startswith("/users/"):
             return True
+
+        if path.startswith("/projects/"):
+            if not self.enforcer.enforce(user, path, method):
+                project_id = path.split("/")[2]
+                if project_id == "":
+                    return self.enforcer.enforce(user, path, method)
+                project_id = UUID(project_id)
+                if project_manager_instance is None:
+                    await initialize_project_manager()
+                project = await project_manager_instance.get(project_id)
+                if project is None:
+                    return None
+                if user == "anonymous":
+                    return False
+                user = await user_manager_instance.get_by_username(user)
+                if project.id in user.project_ids:
+                    return True
 
         if path.startswith("/worksites/"):
             if not self.enforcer.enforce(user, path, method):

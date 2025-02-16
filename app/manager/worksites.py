@@ -23,7 +23,8 @@ class WorksiteManager:
         return worksite
 
     async def get_accessible_worksites(self, user_id) -> List[Worksite]:
-        return self.worksite_table.get_accessible_worksites(user_id)
+        worksites = await self.worksite_table.get_accessible_worksites(user_id)
+        return worksites
 
     async def get_zones(self, worksite_id: UUID) -> List[Zone]:
         """

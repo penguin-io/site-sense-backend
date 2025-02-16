@@ -3,6 +3,7 @@ from typing import TYPE_CHECKING, AsyncGenerator, List
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.orm import mapped_column, Mapped, DeclarativeBase, relationship
+from sqlalchemy.ext.associationproxy import association_proxy, AssociationProxy
 from sqlalchemy import (
     Text,
     String,
@@ -50,6 +51,10 @@ class Project(Base):
             back_populates="project",
             cascade="all, delete, delete-orphan",
             passive_deletes=False,
+            lazy="joined",
+        )
+        worksite_ids: AssociationProxy[List[UUID]] = association_proxy(
+            "worksites", "id"
         )
         users: Mapped[List["User"]] = relationship(
             secondary="project_association",
@@ -119,7 +124,7 @@ class Zone(Base):
         worksite: Mapped["Worksite"] = relationship(
             back_populates="zones", lazy="joined"
         )
-        worksite_ids: Mapped[int] = mapped_column(
+        worksite_id: Mapped[UUID] = mapped_column(
             ForeignKey("worksites.id", ondelete="CASCADE"), index=True, nullable=False
         )
         location: Mapped[str] = mapped_column(String(length=36), nullable=True)
@@ -162,7 +167,7 @@ class SQLAlchemyProjectDatabase:
     async def get_worksites(self, project_id: UUID):
         statement = select(Worksite).where(Worksite.project_id == project_id)
         results = await self.session.execute(statement)
-        return results.scalars().all()
+        return results.unique().scalars().all()
 
     async def create(self, project_create: ProjectCreate) -> Project:
         project = self.project_table(**project_create.model_dump())
@@ -171,6 +176,7 @@ class SQLAlchemyProjectDatabase:
             await self.session.commit()
             await self.session.refresh(project)
         except Exception as e:
+            print(e)
             await self.session.rollback()
             return None
         return project

@@ -40,10 +40,10 @@ class SQLAlchemyWorksiteDatabase:
                 (await self.session.execute(statement)).unique().scalar_one_or_none()
             )
             for worksite_id in project.worksite_ids:
-                worksite = self.get(worksite_id)
+                worksite = await self.get(worksite_id)
                 response.add(worksite)
         for worksite_id in user.worksite_ids:
-            worksite = self.get(worksite_id)
+            worksite = await self.get(worksite_id)
             response.add(worksite)
         return response
 
