@@ -5,6 +5,7 @@ from app.db.zones import get_zone_db
 from app.schemas.zones import ZoneCreate, ZoneUpdate
 from app.exceptions import InvalidWorksiteError
 from uuid import UUID
+import subprocess
 
 
 class ZoneManager:
@@ -32,7 +33,6 @@ class ZoneManager:
         if worksite is None:
             raise InvalidWorksiteError
         zone = await self.zone_table.create(zone_create)
-        print(999999)
         if zone is None:
             raise Exception("Error creating zone")
         return zone
@@ -56,6 +56,14 @@ class ZoneManager:
         """
         result = await self.zone_table.delete(zone_id)
         return result
+
+    async def begin_stream(self, zone_id: UUID):
+        try:
+            result = await self.zone_table.begin_stream(zone_id)
+            return result
+        except Exception as e:
+            print(e)
+            return False
 
 
 async def get_zone_manager(

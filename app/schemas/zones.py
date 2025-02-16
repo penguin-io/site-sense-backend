@@ -10,6 +10,9 @@ class ZoneCreate(BaseModel):
     feed_uri: Optional[Annotated[str, Field(max_length=512)]] = None
     worksite_id: UUID
     activity: Optional[str] = "inactive"
+    location: Optional[Annotated[str, Field(max_length=36)]] = None
+    lat: Optional[float] = None
+    long: Optional[float] = None
 
 
 class ZoneRead(BaseModel):
@@ -20,6 +23,9 @@ class ZoneRead(BaseModel):
     worksite_id: UUID
     project_id: UUID
     activity: str
+    location: Optional[Annotated[str, Field(max_length=36)]] = None
+    lat: Optional[float] = None
+    long: Optional[float] = None
 
 
 class ZonesRead(BaseModel):
@@ -30,3 +36,6 @@ class ZoneUpdate(BaseModel):
     description: Optional[Annotated[str, Field(max_length=512)]] = None
     feed_uri: Optional[Annotated[str, Field(max_length=512)]] = None
     activity: Optional[str] = None
+    location: Optional[Annotated[str, Field(max_length=36)]] = None
+    lat: Optional[float] = None
+    long: Optional[float] = None

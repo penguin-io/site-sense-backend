@@ -174,8 +174,6 @@ def get_worksite_router(get_worksite_manager) -> APIRouter:
         * HTTPException:
             * 404 Not found: If the worksite doesn't exist
         """
-        if not user.is_superuser:
-            raise HTTPException(status_code=403, detail=ErrorCode.ADMIN_REQUIRED)
         worksite = await worksite_manager.update(worksite_id, worksite)
         if worksite is None:
             raise HTTPException(status_code=404, detail=ErrorCode.WORKSITE_NOT_FOUND)

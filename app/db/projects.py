@@ -131,6 +131,12 @@ class Zone(Base):
             ForeignKey("worksites.id", ondelete="CASCADE"), index=True, nullable=False
         )
         location: Mapped[str] = mapped_column(String(length=36), nullable=True)
+        lat: Mapped[float] = mapped_column(Float, nullable=True)
+        long: Mapped[float] = mapped_column(Float, nullable=True)
+        v0: Mapped[int] = mapped_column(Integer, nullable=True)
+        v1: Mapped[int] = mapped_column(Integer, nullable=True)
+        v2: Mapped[int] = mapped_column(Integer, nullable=True)
+        v3: Mapped[int] = mapped_column(Integer, nullable=True)
 
         @hybrid_property
         def project(self):

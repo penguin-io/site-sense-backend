@@ -29,7 +29,7 @@ services:
       POSTGRES_PASSWORD_FILE: /run/secrets/postgres-password
       POSTGRES_DB: mydatabase
     ports:
-      - "5432:5432"
+      - 5432:5432
     secrets:
       - postgres-user
       - postgres-password
@@ -38,16 +38,18 @@ services:
 
   app:
     build: .
+    ports:
+      - 8000:8000
     depends_on:
       - influxdb2
       - postgres
     environment:
-      INFLUXDB_URL: "http://influxdb2:8086"
+      INFLUXDB_URL: "http://127.0.0.1:8086"
       INFLUXDB_ORG: "docs"
-      INFLUXDB_BUCKET: "home"
+      INFLUXDB_BUCKET: "logs"
       INFLUXDB_TOKEN_FILE: "/run/secrets/influxdb2-admin-token"
-      POSTGRES_HOST: "postgres"
-      POSTGRES_DB: "mydatabase"
+      POSTGRES_HOST: "127.0.0.1"
+      POSTGRES_DB: "sitesense"
       POSTGRES_USER_FILE: "/run/secrets/postgres-user"
       POSTGRES_PASSWORD_FILE: "/run/secrets/postgres-password"
     secrets:
@@ -55,7 +57,9 @@ services:
       - postgres-user
       - postgres-password
     volumes:
-      - ./app:/app
+      - ./:/app
+    command: ["python", "/app/main.py"]  # Replace with actual entry point
+
 
 secrets:
   influxdb2-admin-username:

@@ -1,5 +1,8 @@
 from fastapi import APIRouter, Depends, status, HTTPException
+from starlette.status import HTTP_503_SERVICE_UNAVAILABLE
+
 from app.manager.users import current_active_user
+from app.manager.worksites import get_worksite_manager
 from app.schemas.zones import ZoneRead, ZoneCreate, ZoneUpdate
 from app.db.users import User
 from app.exceptions import ErrorCode, ErrorModel
@@ -151,5 +154,49 @@ def get_zone_router(get_zone_manager) -> APIRouter:
         result = await zone_manager.delete(zone_id)
         if not result:
             raise HTTPException(status_code=404, detail=ErrorCode.ZONE_NOT_FOUND)
+
+    @router.get(
+        "/camera", status_code=status.HTTP_201_CREATED, summary="Add camera feed"
+    )
+    async def add_feed_uri(
+        camera_id: UUID, feed_uri: str, zone_manager=Depends(get_zone_manager)
+    ):
+        zone = await zone_manager.get(camera_id)
+        if zone is None:
+            raise HTTPException(status_code=404, detail=ErrorCode.ZONE_NOT_FOUND)
+        zone.feed_uri = feed_uri
+        await zone_manager.update(camera_id, zone)
+        result = await zone_manager.begin_stream(camera_id)
+        if not result:
+            raise HTTPException(
+                status_code=HTTP_503_SERVICE_UNAVAILABLE, detail="Service unavailable"
+            )
+        return {"detail": "success"}
+
+    @router.delete(
+        "/camera/{zone_id}",
+        status_code=status.HTTP_204_NO_CONTENT,
+        summary="Delete a feed uri",
+    )
+    async def delete_feed_uri(zone_id: UUID, zone_manager=Depends(get_zone_manager)):
+        zone = await zone_manager.get(zone_id)
+        if zone is None:
+            raise HTTPException(status_code=404, detail=ErrorCode.ZONE_NOT_FOUND)
+        zone.feed_uri = None
+        await zone_manager.update(zone_id, zone)
+        await zone_manager.end_stream(zone_id)
+        return {"detail": "success"}
+
+    @router.get("/hls/{zone_id}")
+    async def get_hls_feed(zone_id: UUID, zone_manager=Depends(get_zone_manager)):
+        zone = await zone_manager.get(zone_id)
+        if zone is None:
+            raise HTTPException(status_code=404, detail=ErrorCode.ZONE_NOT_FOUND)
+        return {
+            "normal": f"http://localhost:8888/v0/{zone_id}",
+            "yolo": f"http://localhost:8888/v1/{zone_id}",
+            "3d": f"http://localhost:8888/v2/{zone_id}",
+            "pose-points": f"http://localhost:8888/v3/{zone_id}",
+        }
 
     return router

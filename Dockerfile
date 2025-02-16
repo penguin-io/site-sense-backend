@@ -1,16 +1,11 @@
-# Use official Python image
-FROM python:3.11-slim
-
-# Set the working directory inside the container
+FROM python:3.11
 WORKDIR /app
 
-# Copy the application code
-COPY . /app
-
 # Install dependencies
-RUN pip install --no-cache-dir -r requirements.txt
+COPY requirements.txt /tmp/requirements.txt
+RUN pip install --no-cache-dir -r /tmp/requirements.txt
 
 EXPOSE 8000
 
 # Run the application
-CMD ["python", "main.py"]
+ENTRYPOINT ["python", "/app/main.py"]

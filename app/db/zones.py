@@ -4,6 +4,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.db.projects import Zone, get_async_session
 from app.schemas.zones import ZoneCreate, ZoneUpdate
 from fastapi import Depends
+import subprocess
+import os
+import signal
+import asyncio
 
 
 class SQLAlchemyZoneDatabase:
@@ -52,6 +56,31 @@ class SQLAlchemyZoneDatabase:
         await self.session.commit()
         if result.rowcount == 0:
             return False
+        return True
+
+    async def begin_stream(self, zone_id: int):
+        zone = await self.get(zone_id)
+        scripts = ["v0.py", "v1.py", "v2.py", "v3.py"]
+        for i in range(len(scripts)):
+            cmd = ["python3", scripts[i], "--cid", zone_id, "--r_url", zone.feed_uri]
+            proc = subprocess.Popen(cmd)
+            setattr(zone, f"v{i}", proc.pid)
+            await asyncio.sleep(3)
+        self.session.add(zone)
+        await self.session.commit()
+        await self.session.refresh(zone)
+        return True
+
+    async def end_stream(self, zone_id: int):
+        zone = await self.get(zone_id)
+        scripts = ["v0.py", "v1.py", "v2.py", "v3.py"]
+        for i in range(len(scripts)):
+            pid = getattr(zone, f"v{i}")
+            os.kill(pid, signal.SIGTERM)
+            setattr(zone, f"v{i}", None)
+        self.session.add(zone)
+        await self.session.commit()
+        await self.session.refresh(zone)
         return True
 
 
