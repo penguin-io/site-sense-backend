@@ -79,7 +79,7 @@ class SQLAlchemyUserDatabase(SQLAlchemyUserDatabaseX):
                     select(Worksite).where(Worksite.id.in_(access_request.resource_ids))
                 )
                 target = user.worksites
-            resources = resources.scalars().all()
+            resources = resources.unique().scalars().all()
             if access_request.access == "allow":
                 for r in resources:
                     if not r in target:
