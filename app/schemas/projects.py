@@ -7,6 +7,7 @@ from uuid import UUID
 class ProjectCreate(BaseModel):
     name: Annotated[str, Field(min_length=3, max_length=64)]
     description: Optional[Annotated[str, Field(max_length=512)]] = None
+    location: Optional[Annotated[str, Field(max_length=36)]] = None
 
 
 class ProjectRead(BaseModel):
@@ -14,6 +15,7 @@ class ProjectRead(BaseModel):
     name: str
     description: str | None = None
     created_time: datetime
+    location: str
 
 
 class ProjectsRead(RootModel):
@@ -21,4 +23,5 @@ class ProjectsRead(RootModel):
 
 
 class ProjectUpdate(BaseModel):
-    description: str
+    description: Optional[Annotated[str, Field(max_length=512)]] = None
+    location: Optional[Annotated[str, Field(max_length=36)]] = None

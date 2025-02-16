@@ -66,3 +66,5 @@ class SQLAlchemyWorksiteDatabase:
 
 async def get_worksite_db(session: AsyncSession = Depends(get_async_session)):
     yield SQLAlchemyWorksiteDatabase(session, Worksite)
+async def get_employee_db(session: AsyncSession = Depends(get_async_session)):
+    yield SQLAlchemyEmployeeDatabase(session, Employee)

@@ -150,6 +150,7 @@ def get_project_router(get_project_manager) -> APIRouter:
         try:
             project = await project_manager.create(project)
         except Exception as e:
+            print(e)
             raise HTTPException(status_code=422, detail=ErrorCode.PROJECT_NAME_EXISTS)
         return project
 
