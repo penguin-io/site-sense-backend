@@ -162,7 +162,7 @@ class SQLAlchemyProjectDatabase:
     async def get_all(self):
         statement = select(self.project_table)
         results = await self.session.execute(statement)
-        return results.scalars().all()
+        return results.unique().scalars().all()
 
     async def get_worksites(self, project_id: UUID):
         statement = select(Worksite).where(Worksite.project_id == project_id)
