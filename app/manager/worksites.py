@@ -22,6 +22,10 @@ class WorksiteManager:
         worksite = await self.worksite_table.get(worksite_id)
         return worksite
 
+    async def get_all(self) -> List[Worksite]:
+        worksites = await self.worksite_table.get_all()
+        return worksites
+
     async def get_accessible_worksites(self, user_id) -> List[Worksite]:
         worksites = await self.worksite_table.get_accessible_worksites(user_id)
         return worksites

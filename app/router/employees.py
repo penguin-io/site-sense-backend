@@ -5,7 +5,7 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException
 
 from app.db.users import User
-from app.kafka import send_log_to_kafka
+from app.influx import log_attendance
 from app.manager.users import current_active_user
 from app.schemas.employees import (
     AttendanceReq,
@@ -40,7 +40,7 @@ def get_employees_router(get_employee_manager, get_worksite_manager):
                 "time": time(),
             },
         }
-        await send_log_to_kafka(log)
+        log_attendance(log)
 
     @router.post("/logout")
     async def logout(
@@ -64,7 +64,7 @@ def get_employees_router(get_employee_manager, get_worksite_manager):
                 "time": time(),
             },
         }
-        await send_log_to_kafka(log)
+        log_attendance(log)
 
     @router.post("/add", response_model=EmployeeRead)
     async def add_employee(

@@ -30,6 +30,11 @@ class SQLAlchemyWorksiteDatabase:
         results = await self.session.execute(statement)
         return results.unique().scalar_one_or_none()
 
+    async def get_all(self):
+        statement = select(self.worksite_table)
+        results = await self.session.execute(statement)
+        return results.unique().scalars().all()
+
     async def get_accessible_worksites(self, user_id):
         response = set()
         statement = select(User).where(User.id == user_id)

@@ -4,7 +4,6 @@ from fastapi import APIRouter, Depends, status, HTTPException
 
 from app.db.users import User
 from app.exceptions import ErrorCode, ErrorModel
-from app.kafka import send_log_to_kafka
 from app.manager.users import current_active_user
 from app.schemas.projects import ProjectCreate, ProjectRead, ProjectUpdate, ProjectsRead
 from app.schemas.worksites import WorksitesRead
