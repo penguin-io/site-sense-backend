@@ -159,8 +159,10 @@ def get_zone_router(get_zone_manager) -> APIRouter:
         "/camera", status_code=status.HTTP_201_CREATED, summary="Add camera feed"
     )
     async def add_feed_uri(
-        camera_id: UUID, feed_uri: str, zone_manager=Depends(get_zone_manager)
+        camera_id: UUID, feed_uri: str, zone_manager=Depends(get_zone_manager),
+        user: User = Depends(current_active_user)
     ):
+        camera_id = UUID(camera_id)
         zone = await zone_manager.get(camera_id)
         if zone is None:
             raise HTTPException(status_code=404, detail=ErrorCode.ZONE_NOT_FOUND)
@@ -177,8 +179,10 @@ def get_zone_router(get_zone_manager) -> APIRouter:
         "/camera/{zone_id}",
         status_code=status.HTTP_204_NO_CONTENT,
         summary="Delete a feed uri",
+        user = Depends(current_active_user)
     )
     async def delete_feed_uri(zone_id: UUID, zone_manager=Depends(get_zone_manager)):
+        camera_id = UUID(zone_id)
         zone = await zone_manager.get(zone_id)
         if zone is None:
             raise HTTPException(status_code=404, detail=ErrorCode.ZONE_NOT_FOUND)
@@ -188,7 +192,8 @@ def get_zone_router(get_zone_manager) -> APIRouter:
         return {"detail": "success"}
 
     @router.get("/hls/{zone_id}")
-    async def get_hls_feed(zone_id: UUID, zone_manager=Depends(get_zone_manager)):
+    async def get_hls_feed(zone_id: UUID, zone_manager=Depends(get_zone_manager), user = Depends(current_active_user)):
+        zone_id = UUID(zone_id)
         zone = await zone_manager.get(zone_id)
         if zone is None:
             raise HTTPException(status_code=404, detail=ErrorCode.ZONE_NOT_FOUND)
