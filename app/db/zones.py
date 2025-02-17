@@ -1,3 +1,5 @@
+from uuid import UUID
+
 from sqlalchemy import select, update, delete
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -24,7 +26,7 @@ class SQLAlchemyZoneDatabase:
         self.session = session
         self.zone_table = zone_table
 
-    async def get(self, zone_id: int):
+    async def get(self, zone_id: UUID):
         statement = select(self.zone_table).where(self.zone_table.id == zone_id)
         results = await self.session.execute(statement)
         return results.unique().scalar_one_or_none()
@@ -41,16 +43,23 @@ class SQLAlchemyZoneDatabase:
             return None
         return zone
 
-    async def update(self, zone_id: str, zone_update: ZoneUpdate):
+    async def update(self, zone_id: UUID, zone_update: ZoneUpdate):
+        update_data = {
+            k: v for k, v in zone_update.model_dump().items() if v is not None
+        }
+
+        if not update_data:
+            raise ValueError("No valid fields provided for update")
+
         statement = (
             update(self.zone_table)
             .where(self.zone_table.id == zone_id)
-            .values(**zone_update.model_dump())
+            .values(**update_data)
         )
         await self.session.execute(statement)
         await self.session.commit()
 
-    async def delete(self, zone_id: str):
+    async def delete(self, zone_id: UUID):
         statement = delete(self.zone_table).where(self.zone_table.id == zone_id)
         result = await self.session.execute(statement)
         await self.session.commit()
@@ -58,11 +67,18 @@ class SQLAlchemyZoneDatabase:
             return False
         return True
 
-    async def begin_stream(self, zone_id: int):
+    async def begin_stream(self, zone_id: UUID):
         zone = await self.get(zone_id)
         scripts = ["v0.py", "v1.py", "v2.py", "v3.py"]
         for i in range(len(scripts)):
-            cmd = ["python3", scripts[i], "--cid", zone_id, "--r_url", zone.feed_uri]
+            cmd = [
+                "python3",
+                scripts[i],
+                "--cid",
+                str(zone_id),
+                "--r_url",
+                zone.feed_uri,
+            ]
             proc = subprocess.Popen(cmd)
             setattr(zone, f"v{i}", proc.pid)
             await asyncio.sleep(3)
@@ -71,7 +87,7 @@ class SQLAlchemyZoneDatabase:
         await self.session.refresh(zone)
         return True
 
-    async def end_stream(self, zone_id: int):
+    async def end_stream(self, zone_id: UUID):
         zone = await self.get(zone_id)
         scripts = ["v0.py", "v1.py", "v2.py", "v3.py"]
         for i in range(len(scripts)):

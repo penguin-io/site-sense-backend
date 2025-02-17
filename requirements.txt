@@ -11,3 +11,4 @@ python-dotenv~=1.0.1
 aiokafka~=0.12.0
 influxdb_client
 asyncpg
+cv2

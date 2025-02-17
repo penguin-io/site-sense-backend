@@ -63,7 +63,6 @@ class ZoneManager:
             return result
         except Exception as e:
             print(e)
-            print(111111)
             return False
 
 

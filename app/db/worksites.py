@@ -55,7 +55,7 @@ class SQLAlchemyWorksiteDatabase:
     async def get_zones(self, worksite_id: UUID):
         statement = select(Zone).where(Zone.worksite_id == worksite_id)
         results = await self.session.execute(statement)
-        return results.scalars().all()
+        return results.unique().scalars().all()
 
     async def create(self, worksite_create: WorksiteCreate) -> Worksite:
         worksite = self.worksite_table(**worksite_create.model_dump())

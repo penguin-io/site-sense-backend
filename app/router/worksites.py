@@ -108,7 +108,6 @@ def get_worksite_router(get_worksite_manager) -> APIRouter:
         zones = await worksite_manager.get_zones(worksite_id)
         if zones is None:
             raise HTTPException(status_code=404, detail=ErrorCode.WORKSITE_NOT_FOUND)
-        print(zones)
         return zones
 
     @router.post(

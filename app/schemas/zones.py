@@ -39,3 +39,8 @@ class ZoneUpdate(BaseModel):
     location: Optional[Annotated[str, Field(max_length=36)]] = None
     lat: Optional[float] = None
     long: Optional[float] = None
+
+
+class AddFeedReq(BaseModel):
+    zone_id: UUID
+    feed_uri: str

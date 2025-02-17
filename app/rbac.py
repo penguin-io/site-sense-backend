@@ -171,16 +171,21 @@ class CasbinMiddleware:
                     return None
                 return True
 
+        if path.startswith("/zones/camera") or path.startswith("/zones/hls"):
+            return True
+
         if path.startswith("/zones/"):
             zone_id = path.split("/")[2]
             if zone_id == "":
                 return self.enforcer.enforce(user, path, method)
-            zone_id = UUID(zone_id)
             if zone_manager_instance is None:
                 await initialize_zone_manager()
+            zone_id = UUID(zone_id)
             zone = await zone_manager_instance.get(zone_id)
             if zone is None:
                 return None
+            if user == "admin":
+                return True
             if user == "anonymous":
                 return False
             user = await user_manager_instance.get_by_username(user)
