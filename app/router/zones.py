@@ -179,9 +179,8 @@ def get_zone_router(get_zone_manager) -> APIRouter:
         "/camera/{zone_id}",
         status_code=status.HTTP_204_NO_CONTENT,
         summary="Delete a feed uri",
-        user = Depends(current_active_user)
     )
-    async def delete_feed_uri(zone_id: UUID, zone_manager=Depends(get_zone_manager)):
+    async def delete_feed_uri(zone_id: UUID, zone_manager=Depends(get_zone_manager), user = Depends(current_active_user)):
         camera_id = UUID(zone_id)
         zone = await zone_manager.get(zone_id)
         if zone is None:
